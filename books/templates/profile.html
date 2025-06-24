@@ -1,0 +1,18 @@
+{% extends 'base.html' %} 
+ 
+{% block content %} 
+    {% if user.is_authenticated %}
+        <p>Личный кабинет, {{ user.username }}!</p>
+
+        <h2>Ваши оценки</h2>
+        {% include 'book_list.html' with books=books %} 
+
+        <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit">Выйти</button>
+        </form>
+
+    {% endif %}
+{% endblock %}
+
+

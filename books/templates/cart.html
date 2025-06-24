@@ -1,0 +1,11 @@
+
+{% extends "base.html" %}
+{% block title %}{{title}}{% endblock %}
+{% block content %}
+<h1>Корзина</h1>
+{% if books %}
+{% include 'book_list.html' with books=last_books %}
+{% else %}
+    <p>Корзина пуста.</p>
+{% endif %}
+{% endblock %}
