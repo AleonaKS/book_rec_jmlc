@@ -7,8 +7,8 @@ django-pandas==0.6.7
 numpy==1.26.4
 pandas==2.3.0
 scikit-learn==1.6.1
-# scipy==1.13.1
-surprise==1.1.4
+# scipy==1.13.1 
+surprise
 torch==2.2.2
 transformers==4.52.4
 sentence-transformers==4.1.0
