@@ -122,6 +122,7 @@ def book_detail(request, book_id):
         in_bookmarks = UserBookStatus.objects.filter(user=user, book=book, status=UserBookStatus.STATUS_WISHLIST).exists()
     # book = get_object_or_404(Book, id=book_id)
     similar_books = hybrid_recommendations_for_book(book, top_n=10)
+    similar_books = hybrid_recommendations_for_book(book, top_n=10)
     context = {
         'book': book,
         'in_cart': in_cart,
