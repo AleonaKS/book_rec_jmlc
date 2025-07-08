@@ -9,6 +9,7 @@ WORKDIR /app
 
 COPY books_site/requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install surprise
 
 COPY books_site /app
 COPY db.sqlite3 /app/
