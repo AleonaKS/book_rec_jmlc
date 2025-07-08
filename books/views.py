@@ -121,12 +121,13 @@ def book_detail(request, book_id):
         in_cart = UserBookStatus.objects.filter(user=user, book=book, status=UserBookStatus.STATUS_CART).exists()
         in_bookmarks = UserBookStatus.objects.filter(user=user, book=book, status=UserBookStatus.STATUS_WISHLIST).exists()
     # book = get_object_or_404(Book, id=book_id)
-    user = request.user 
+    similar_books = hybrid_recommendations_for_book(book, top_n=10)
     context = {
         'book': book,
         'in_cart': in_cart,
         'in_bookmarks': in_bookmarks,
         'csrf_token': get_token(request), 
+        'similar_books': similar_books
     }
     return render(request, 'book_detail.html', context)
 
