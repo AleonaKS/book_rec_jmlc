@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
-
+from django.utils import timezone
 
 
 class SluggedModel(models.Model):
@@ -16,6 +16,9 @@ class SluggedModel(models.Model):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return self.name
 
 class Author(SluggedModel):
     pass
@@ -44,11 +47,12 @@ class Book(models.Model):
     series = models.ForeignKey(Series, on_delete=models.SET_NULL, null=True, blank=True)
     publisher = models.ForeignKey(Publisher, on_delete=models.SET_NULL, null=True, blank=True)
     cycle =  models.ForeignKey(Cycle, on_delete=models.SET_NULL, null=True, blank=True)
+    book_number_in_cycle = models.PositiveIntegerField(null=True, blank=True)
     title = models.CharField(max_length=300)
     soon = models.BooleanField(default=False)
     new = models.BooleanField(default=False)
-    year_of_publishing = models.PositiveIntegerField()
-    number_of_pages = models.PositiveIntegerField()     # где-то учитывать
+    year_of_publishing = models.PositiveIntegerField(null=True, blank=True) 
+    number_of_pages = models.PositiveIntegerField(null=True, blank=True)     # где-то учитывать
     age_restriction = models.CharField(max_length=3, blank=True, null=True)
     cover_type = models.CharField(max_length=30, blank=True, null=True)
     description = models.TextField()
@@ -78,8 +82,7 @@ class BookRating(models.Model):
         unique_together = ('book', 'user')
 
 
-from django.db import models
-from django.contrib.auth.models import User
+
 
 class UserBookStatus(models.Model):
     STATUS_PURCHASED = 'PURCHASED'
@@ -126,10 +129,24 @@ class BookView(models.Model):
     scroll_depth = models.IntegerField(null=True, blank=True)
 
 
+class UserSearchQuery(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='search_queries')
+    session_key = models.CharField(max_length=40, null=True, blank=True, db_index=True)
+    query_text = models.CharField(max_length=255)
+    frequency = models.PositiveIntegerField(default=1)  # количество повторений
+    last_searched = models.DateTimeField(auto_now=True)  # время последнего поиска
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'query_text')
+        indexes = [
+            models.Index(fields=['user', 'query_text']),
+        ]
 
 
 class UserPreferences(models.Model):  
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    favorite_authors = models.ManyToManyField(Author, through='FavoriteAuthors', related_name='profile_users')
     favorite_genres = models.ManyToManyField(Genre, through='FavoriteGenres', related_name='profile_users')
     favorite_tags = models.ManyToManyField(Tag, through='FavoriteTags', related_name='profile_users')
     disliked_genres = models.ManyToManyField(Genre, related_name='disliked_by_users')
@@ -228,6 +245,43 @@ class BookVector(models.Model):
 
 
 
+
+
+
+class Embedding(models.Model):
+    content_type = models.CharField(max_length=50)  # 'author', 'genre', 'tag' и т.п.
+    object_id = models.PositiveIntegerField()
+    vector = models.JSONField()  # список float
+
+    class Meta:
+        unique_together = ('content_type', 'object_id')
+
+
+class BookEmbedding(models.Model):
+    """
+    Эмбеддинг книги (например, из BERT) для similarity-рекомендаций.
+    """
+    book = models.OneToOneField('Book', on_delete=models.CASCADE, related_name='embedding')
+    vector = models.JSONField(default=list, blank=True)  
+
+
+class ReviewEmbedding(models.Model):
+    """
+    Эмбеддинг отзыва пользователя для анализа и рекомендаций.
+    """
+    review = models.OneToOneField('Review', on_delete=models.CASCADE, related_name='embedding')
+    vector = models.JSONField(default=list, blank=True)  
+
+
+from django.db import models
+from django.contrib.auth.models import User
+
+class UserTopicVector(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='topic_vector')
+    vector = models.JSONField(default=list, blank=True)  # список чисел
+
+    def __str__(self):
+        return f"UserTopicVector(user={self.user.username})"
 
 # ----------------------------------------------------------------------
 

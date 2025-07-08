@@ -1,26 +1,39 @@
+import logging
+from difflib import SequenceMatcher
 from rest_framework.decorators import permission_classes, api_view, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from haystack.query import SearchQuerySet
-from .serializers import BookSerializer
 from rest_framework import status
+from haystack.query import SearchQuerySet
+from django.db.models import F 
 from django.shortcuts import get_object_or_404 
-from django.utils import timezone 
-import logging
+from django.utils import timezone  
+from books.models import Book, BookRating, BookView, UserBookStatus, UserSearchQuery
+from .recommendations.collaborative import get_recommendations_for_user_user_based   
+from .serializers import BookSerializer, UserSearchQuerySerializer
+
 logger = logging.getLogger(__name__)
 # from django.views.decorators.csrf import csrf_exempt
-  
-from books.models import Book, BookRating, BookView, UserBookStatus
-from .recommendations.collaborative import get_recommendations_for_user_user_based   
+
+# @api_view(['GET'])
+# def user_recommendations_api(request, user_id): 
+#     recommended_books = get_recommendations_for_user_user_based(user_id, top_n=10)
+#     serializer = BookSerializer(recommended_books, many=True)
+#     return Response(serializer.data)
 
 
 @api_view(['GET'])
-def user_recommendations_api(request, user_id): 
-    recommended_books = get_recommendations_for_user_user_based(user_id, top_n=10)
-    serializer = BookSerializer(recommended_books, many=True)
+def autocomplete(request):
+    q = request.GET.get('q', '')
+    if not q:
+        return Response([])
+
+    books = Book.objects.filter(title__icontains=q)[:10]
+    serializer = BookSerializer(books, many=True)
     return Response(serializer.data)
 
 
+# Автодополнение по названию и автору книги:
 @api_view(['GET'])
 @permission_classes([AllowAny])  
 def autocomplete_books(request):
@@ -40,6 +53,7 @@ def autocomplete_books(request):
     return Response(results)
 
 
+# Оценка книги пользователем
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def book_rate(request, book_id):
@@ -61,14 +75,13 @@ def book_rate(request, book_id):
     return Response({'message': 'Оценка сохранена'})
 
  
-
+# Запись просмотра книги
 @api_view(['POST'])
 @permission_classes([AllowAny]) 
 def record_book_view(request):
     data = request.data
     book_id = data.get('book_id')
-    print('book_id:', book_id)  
-    duration = data.get('duration_seconds', 0)
+    print('book_id:', book_id)   
     scroll = data.get('scroll_depth')
 
     if not book_id:
@@ -144,7 +157,7 @@ def record_book_view(request):
 
 
 
-
+# Добавление книги в корзину и в закладки
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_to_cart(request):
@@ -178,3 +191,104 @@ def add_to_bookmarks(request):
         defaults={'status': UserBookStatus.STATUS_WISHLIST}
     ) 
     return Response({'detail': 'Книга добавлена в закладки'}, status=status.HTTP_200_OK)
+
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def remove_from_cart(request):
+    book_id = request.data.get('book_id')
+    if not book_id:
+        return Response({'error': 'book_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+    book = get_object_or_404(Book, id=book_id)
+    user = request.user
+
+    try:
+        obj = UserBookStatus.objects.get(user=user, book=book, status=UserBookStatus.STATUS_CART)
+        obj.delete()
+        return Response({'detail': 'Книга удалена из корзины'}, status=status.HTTP_200_OK)
+    except UserBookStatus.DoesNotExist:
+        return Response({'error': 'Книга не найдена в корзине'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def remove_from_bookmarks(request):
+    book_id = request.data.get('book_id')
+    if not book_id:
+        return Response({'error': 'book_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+    book = get_object_or_404(Book, id=book_id)
+    user = request.user
+
+    try:
+        obj = UserBookStatus.objects.get(user=user, book=book, status=UserBookStatus.STATUS_WISHLIST)
+        obj.delete()
+        return Response({'detail': 'Книга удалена из закладок'}, status=status.HTTP_200_OK)
+    except UserBookStatus.DoesNotExist:
+        return Response({'error': 'Книга не найдена в закладках'}, status=status.HTTP_404_NOT_FOUND)
+
+
+# 
+def log_user_search(user, query_text):
+    if not user.is_authenticated:
+        return  
+
+    obj, created = UserSearchQuery.objects.get_or_create(user=user, query_text=query_text)
+    if not created:
+        obj.frequency += 1
+        obj.last_searched = timezone.now()
+        obj.save()
+
+
+
+
+
+
+SIMILARITY_THRESHOLD = 0.8
+from difflib import SequenceMatcher
+
+def are_queries_similar(q1, q2, threshold=SIMILARITY_THRESHOLD):
+    return SequenceMatcher(None, q1.lower(), q2.lower()).ratio() >= threshold
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def record_user_search(request):
+    query = request.data.get('query_text', '').strip()
+    if not query:
+        return Response({'error': 'query_text is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    obj, created = UserSearchQuery.objects.get_or_create(
+        user=request.user,
+        query_text=query,
+        defaults={'frequency': 1}
+    )
+    if not created:
+        obj.frequency = F('frequency') + 1
+        obj.last_searched = timezone.now()
+        obj.save(update_fields=['frequency', 'last_searched'])
+        obj.refresh_from_db()
+
+    serializer = UserSearchQuerySerializer(obj)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_user_search_history(request):
+    user = request.user if request.user.is_authenticated else None
+
+    if user is None:
+        if not request.session.session_key:
+            request.session.create()
+        session_key = request.session.session_key
+        queries = UserSearchQuery.objects.filter(user__isnull=True, session_key=session_key)
+        user_queries = queries.order_by('-last_searched')
+    else:
+        user_queries = UserSearchQuery.objects.filter(user=user).order_by('-last_searched')
+        # Ограничиваем количество записей  
+    if user_queries.count() > 50:
+        to_delete = user_queries[50:]
+        to_delete.delete()
+    serializer = UserSearchQuerySerializer(user_queries[:10], many=True)
+    return Response(serializer.data)

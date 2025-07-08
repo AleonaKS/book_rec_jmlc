@@ -112,5 +112,5 @@ def import_reviews(file_path):
 
 
 if __name__ == '__main__':
-    json_file_path = 'scraper/parsing_books/spiders/reviews_results.json'
+    json_file_path = 'scraper/parsing_books/spiders/reviews.json'
     import_reviews(json_file_path)

@@ -18,9 +18,14 @@ from django.contrib import admin
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from books import views
-
-from books.api_views import record_book_view, user_recommendations_api, autocomplete_books, book_rate, add_to_bookmarks, add_to_cart
+from books.api_views import (
+ autocomplete_books, book_rate, record_book_view, 
+ add_to_bookmarks, add_to_cart, 
+ record_user_search, get_user_search_history,
+ add_to_cart, remove_from_cart, add_to_bookmarks, remove_from_bookmarks
  
+) 
+   
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -31,6 +36,9 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('autocomplete/', autocomplete_books, name='autocomplete_books'),
     path('profile/', views.profile, name='profile'), 
+    path('api/record-book-view/', record_book_view, name='record-book-view'),
+    path('api/record_user_search/', record_user_search, name='record_user_search'),
+    path('api/get_user_search_history/', get_user_search_history, name='get_user_search_history'),
     path('search/', views.search_books, name='search_books'), 
     path('cart/', views.cart, name='cart'), 
     path('bookmarks/', views.bookmarks, name='bookmarks'), 
@@ -38,9 +46,10 @@ urlpatterns = [
     path('books/<int:book_id>/rate/', book_rate, name='book_rate'),
     path('api/cart/add/', add_to_cart, name='add_to_cart'),
     path('api/bookmarks/add/', add_to_bookmarks, name='add_to_bookmarks'),
-    path('api/recommendations/user/<int:user_id>/', user_recommendations_api, name='user-recommendations-api'),
-    path('api/record-book-view/', record_book_view, name='record-book-view'),
-    
+    path('api/cart/add/', add_to_cart, name='add_to_cart'),
+    path('api/cart/remove/', remove_from_cart, name='remove_from_cart'),
+    path('api/bookmarks/add/', add_to_bookmarks, name='add_to_bookmarks'),
+    path('api/bookmarks/remove/', remove_from_bookmarks, name='remove_from_bookmarks'),
 ]
 
  

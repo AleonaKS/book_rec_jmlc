@@ -69,6 +69,10 @@ a {
 h2 {
     color: #414142;
 }
+h3 {
+    white-space: pre-wrap;
+}
+
 
 .error {
     color: red;
@@ -89,25 +93,49 @@ h2 {
 }
 
 .scroll-item {
+    /* margin: 0 20px;
+    text-align: center;
+    flex: 0 0 auto;  */
+  flex: 0 0 auto;       
+  margin: 0 50px;
+  text-align: center;
+  max-width: 400px;      
+}
+
+.scroll-item img {
+  height: 350px;
+  border-radius: 20px;
+  /* width: 100%;
+  object-fit: cover; */
+}
+
+.scroll-item h3 {
+  margin-top: 10px;
+  white-space: normal;   /* разрешаем переносы */
+  overflow-wrap: break-word; /* переносим длинные слова */
+  word-break: break-word;     /* для лучшей поддержки */
+  font-size: 1.1em;
+  overflow: visible;   
+    text-overflow: clip;  
+    display: block;       
+}
+/* 
+.scroll-item {
     margin: 0 20px;
     text-align: center;
     flex: 0 0 auto; 
 }
-
 .scroll-item img {
     height: 350px !important;
     border-radius: 20px;
 }
-
-.scroll-item h3,
-.scroll-item p {
-    white-space: normal;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2; 
-    -webkit-box-orient: vertical;
-}
+.scroll-item h3 {
+    white-space: normal; /* разрешить перенос строк  
+    overflow: visible;   
+    text-overflow: clip;  
+    display: block;       
+} 
+*/
 
 
 
@@ -584,4 +612,31 @@ button:hover {
     color: #555;
   } 
   
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  /* =================== */
   

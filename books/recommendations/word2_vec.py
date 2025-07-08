@@ -1,8 +1,8 @@
 import re
 import numpy as np
-from books.models import BookVector, Book
+from books.models import BookVector, Book, UserBookStatus, BookRating
 from gensim.models import Word2Vec 
-
+from collections import defaultdict
 
 def compute_and_store_word2vec_vectors(vector_size=100, window=5, min_count=2, workers=4):
     corpus, books = prepare_corpus()
@@ -67,6 +67,48 @@ def get_similar_books_by_w2v(target_book_id, top_n=10):
         if book:
             result.append({'book': book, 'similarity': sim})
     return result
+
+
+def get_read_books_for_user(user_id):
+    # Книги, которые пользователь купил
+    bought_books = set(
+        UserBookStatus.objects.filter(
+            user_id=user_id,
+            status=UserBookStatus.STATUS_PURCHASED
+        ).values_list('book_id', flat=True)
+    )
+    rated_books = set(
+        BookRating.objects.filter(
+            user_id=user_id,
+            rating__isnull=False
+        ).values_list('book_id', flat=True)
+    ) 
+    user_books = bought_books.union(rated_books)
+    return user_books
+
+def get_word2vec_recommendations_for_user(user, top_n=10):
+    read_books = get_read_books_for_user(user.id)
+    if not read_books:
+        return []
+
+    similar_books_scores = defaultdict(float)
+    for book in read_books:
+        sims = get_similar_books_by_w2v(book.id, top_n=top_n*2)  # берем больше, чтобы потом отфильтровать
+        for rec in sims:
+            rec_book = rec['book']
+            sim_score = rec['similarity']
+            if rec_book.id not in read_books:
+                similar_books_scores[rec_book.id] = max(similar_books_scores[rec_book.id], sim_score)
+
+    # Сортируем по убыванию сходства
+    sorted_books = sorted(similar_books_scores.items(), key=lambda x: x[1], reverse=True)[:top_n]
+    book_ids = [bid for bid, _ in sorted_books]
+    books = Book.objects.filter(id__in=book_ids)
+    # Сохраняем порядок
+    books_dict = {book.id: book for book in books}
+    ordered_books = [books_dict[bid] for bid in book_ids if bid in books_dict]
+    return ordered_books
+
 
 
 def tokenize(text):  # Простая токенизация: по словам, в нижний регистр, только буквы и цифры

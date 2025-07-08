@@ -52,7 +52,7 @@
         </div>
         <!-- Форма входа -->
         <div id="loginFormContainer"> 
-            <form method="post" action="{% url 'signup' %}" id="loginForm">
+            <form method="post" action="{% url 'login' %}" id="loginForm">
                 {% csrf_token %}
                 <div class="input-container">
                     <input type="login" name="username" id="username" placeholder="Логин" required>
@@ -86,156 +86,17 @@
     </div>
 </div>
 
-
+<script>
+    const loginUrl = "{% url 'login' %}";
+</script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<!-- JavaScript для управления модальным окном -->
-<script>
-    // Получаем элементы модального окна и кнопки
-    var modal = document.getElementById("loginModal");
-    var btn = document.getElementById("loginBtn"); 
-    var span = document.getElementsByClassName("close")[0];
-    
-    btn.onclick = function() {
-        modal.style.display = "block";
-    }; 
-    span.onclick = function() {
-        modal.style.display = "none";
-    }; 
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = "none";
-        }
-    };
-    // Переключение на форму регистрации
-    document.getElementById("showRegister").onclick = function(event) {
-        event.preventDefault();
-        document.getElementById("loginFormContainer").style.display = "none";
-        document.getElementById("registrationFormContainer").style.display = "block"; 
-        document.getElementById("showLogin").classList.remove("active");
-        document.getElementById("showRegister").classList.add("active");
-    };
-    // Переключение на форму входа
-    document.getElementById("showLogin").onclick = function(event) {
-        event.preventDefault();
-        document.getElementById("registrationFormContainer").style.display = "none";
-        document.getElementById("loginFormContainer").style.display = "block"; 
-        document.getElementById("showRegister").classList.remove("active");
-        document.getElementById("showLogin").classList.add("active");
-    };
-    
-    
-    $(document).ready(function() {
-        $('#showRegistrationForm').click(function(event) {
-            event.preventDefault();
-            $('#loginFormContainer').hide();
-            $('#registrationFormContainer').show();
-        });
-        $('#showLoginForm').click(function(event) {
-            event.preventDefault();
-            $('#registrationFormContainer').hide();
-            $('#loginFormContainer').show();
-        });
-        $('#loginForm').submit(function(event) {
-            event.preventDefault();
-            $.ajax({
-                type: "POST",
-                url: "{% url 'login' %}",
-                data: $(this).serialize(),
-                success: function(response) {
-                    // Обработка успешного входа
-                    window.location.reload();
-                    // alert('Успешный вход!');
-                    // Закрыть модальное окно или перенаправить
-                },
-                error: function(response) {
-                    // Обработка ошибок
-                    alert('Ошибка входа!');
-                }
-            });
-        });
-        
-        $('#registrationForm').submit(function(event) {
-        event.preventDefault(); // Отменяем стандартное поведение формы
-        $.ajax({
-            type: "POST",
-            url: $(this).attr('action'), // URL для обработки регистрации
-            data: $(this).serialize(), // Сериализуем данные формы
-            success: function(response) {
-                alert('Регистрация успешна!'); // Успешное сообщение
-                window.location.reload(); // Можно обновить страницу или перенаправить
-            },
-            error: function(response) {
-                if (response.responseJSON && response.responseJSON.error) {
-                    alert(response.responseJSON.error); // Показываем ошибку
-                } else {
-                    alert('Ошибка регистрации!');
-                }
-            }
-        });
-    });
-});
-</script>
-
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const input = document.getElementById('search-input');
-        const resultsBox = document.getElementById('autocomplete-results');
-    
-        input.addEventListener('input', function () {
-            const query = input.value.trim();
-            if (query.length < 2) {
-                resultsBox.innerHTML = '';
-                resultsBox.style.display = 'none';
-                return;
-            }
-    
-            fetch(`/autocomplete/?q=${encodeURIComponent(query)}`)
-                .then(response => response.json())
-                .then(data => {
-                    resultsBox.innerHTML = '';
-                    if (data.length > 0) {
-                        resultsBox.style.display = 'block';
-                        const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'i');
-    
-                        data.forEach(item => {
-                            const div = document.createElement('div');
-                            div.classList.add('autocomplete-item');
-    
-                            // выделяем совпадающий фрагмент жирным шрифтом
-                            const highlighted = item.title.replace(regex, '<strong>\$1</strong>');
-                            div.innerHTML = highlighted;
-    
-                            div.addEventListener('click', () => {
-                                input.value = item.title;
-                                resultsBox.innerHTML = '';
-                                resultsBox.style.display = 'none';
-                                input.form.submit();
-                            });
-    
-                            resultsBox.appendChild(div);
-                        });
-                    } else {
-                        resultsBox.style.display = 'none';
-                    }
-                });
-        });
-    
-        document.addEventListener('click', function (e) {
-            if (!e.target.closest('.search-bar')) {
-                resultsBox.innerHTML = '';
-                resultsBox.style.display = 'none';
-            }
-        });
-    });
-</script>
-    
-    
-
+<script src="{% static 'main.js' %}"></script>
 
         <div class="content">
     {% block content %}
     {% endblock %}
 </div>
+
+
 </body>
 </html>

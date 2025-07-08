@@ -77,7 +77,12 @@ def import_books(file_path):
             cycle_obj = get_or_create_slugged(Cycle, cycle_name) if cycle_name else None
 
             try:
-                year = int(book_data.get('the_year_of_publishing') or 0)
+                book_number_in_cycle = int(book_data.get('book_number_in_cycle') or 0)
+            except Exception:
+                book_number_in_cycle = None
+
+            try:
+                year = int(book_data.get('year_of_publishing') or 0)
             except Exception:
                 year = 0
 
@@ -102,6 +107,7 @@ def import_books(file_path):
                 genre=genre_obj,
                 year_of_publishing=year,
                 number_of_pages=pages,
+                book_number_in_cycle=book_number_in_cycle if book_number_in_cycle > 0 else None,
                 age_restriction=book_data.get('age_restriction') or None,
                 cover_type=book_data.get('cover_type') or 'неизвестно',
                 description=book_data.get('description') or '',

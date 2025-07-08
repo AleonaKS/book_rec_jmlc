@@ -50,7 +50,12 @@ htmlcov/
 scraper/scraper.log
 scraper/parsing_books/scraper.log
 
-# Model files, embeddings, large data files (опционально, если не хотите заливать)
+# Model files, embeddings, large data files  
 *.pkl
 *.pth
 node2vec_embeddings.kv
+
+.csv
+
+books/recommendations/nltk_lda.py
+books/management/commands/embedding.py

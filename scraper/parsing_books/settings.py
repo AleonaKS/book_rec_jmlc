@@ -29,7 +29,7 @@ ROBOTSTXT_OBEY = False
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-DOWNLOAD_DELAY = 3
+DOWNLOAD_DELAY = 10
 RANDOMIZE_DOWNLOAD_DELAY = True
 
 CONCURRENT_REQUESTS = 2
@@ -38,6 +38,9 @@ CONCURRENT_REQUESTS_PER_DOMAIN = 2
 DEFAULT_REQUEST_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Referer': 'https://www.chitai-gorod.ru/',
+    'Connection': 'keep-alive',
 }
 
 AUTOTHROTTLE_ENABLED = True
@@ -46,9 +49,7 @@ AUTOTHROTTLE_MAX_DELAY = 20
 AUTOTHROTTLE_TARGET_CONCURRENCY = 1.0
 AUTOTHROTTLE_DEBUG = False
 
-
-# Disable cookies (enabled by default)
-COOKIES_ENABLED = True
+# COOKIES_ENABLED = True
 
 FEED_EXPORT_ENCODING = "utf-8"
 
@@ -60,9 +61,9 @@ PLAYWRIGHT_LAUNCH_OPTIONS = {
     "timeout": 60000,
 }
 
-DOWNLOADER_MIDDLEWARES = {
-    'scrapy_playwright.middlewares.ScrapyPlaywrightDownloadHandler': 543,
-}
+# DOWNLOADER_MIDDLEWARES = {
+#     'scrapy_playwright.middlewares.ScrapyPlaywrightDownloadHandler': 543,
+# }
 
 
 # Максимальное число параллельных браузеров

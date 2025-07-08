@@ -1,19 +1,21 @@
-from django.shortcuts import render, redirect, get_object_or_404
 import logging
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
 from django.contrib.auth import login, authenticate
-from .forms import SignUpForm, LoginForm
-from django.http import JsonResponse
 from django.contrib.auth.models import User 
-from .filters import BookFilter 
-from haystack.query import SearchQuerySet
+from django.contrib.auth.decorators import login_required 
+from django.http import JsonResponse 
 from django.views.decorators.http import require_GET, require_POST
-from django.contrib.auth.decorators import login_required
-from .forms import BookRatingForm
-from .models import Book, Review, BookView, BookRating, UserBookStatus
+from django.middleware.csrf import get_token
+from django.db import transaction
 from django.db.models import OuterRef, Subquery 
+from haystack.query import SearchQuerySet
+from .filters import BookFilter 
+from .forms import SignUpForm, UserPreferencesForm #, LoginForm, BookRatingForm
+from .models import Book, Review, BookView, BookRating, UserBookStatus, UserPreferences
+from .models import UserPreferences, FavoriteAuthors, FavoriteGenres, FavoriteTags, DislikedGenres, DislikedTags
+from books.recommendations.base_recommendations import recommendations_split, recommendations_for_anonymous, recommendations_for_user_without_preferences
 from books.recommendations.hybrid import hybrid_recommendations_for_user, hybrid_recommendations_for_book
-
-
 
 logger = logging.getLogger(__name__)
  
@@ -72,10 +74,19 @@ def search_books(request):
 
 
 def home_view(request):
+    popular_books, new_books, soon_books = None, None, None
     if request.user.is_authenticated:
         user_views = BookView.objects.filter(user=request.user).order_by('-viewed_at')
         user = request.user
-        recommended_books = hybrid_recommendations_for_user(user, top_n=10)
+        recommended_books = hybrid_recommendations_for_user(user, top_n=30)
+        try:
+            prefs = user.userpreferences
+            favorite_genres = prefs.favorite_genres.all().values_list('id', flat=True)
+            favorite_tags = prefs.favorite_tags.all().values_list('id', flat=True)
+            recommended_books = hybrid_recommendations_for_user(user, top_n=30)
+            popular_books, new_books, soon_books = recommendations_split(user, list(favorite_genres), list(favorite_tags), top_n=30)
+        except UserPreferences.DoesNotExist:
+            popular_books, new_books, soon_books = recommendations_for_user_without_preferences(user, top_n=30)
     else:
         session_key = request.session.session_key
         if not session_key:
@@ -83,6 +94,7 @@ def home_view(request):
             session_key = request.session.session_key
         user_views = BookView.objects.filter(user__isnull=True, session_key=session_key).order_by('-viewed_at')
         recommended_books = Book.objects.all()
+        popular_books, new_books, soon_books = recommendations_for_anonymous(session_key)
 
     last_20_book_ids = list(user_views.values_list('book_id', flat=True).distinct()[:20])
     books = list(Book.objects.filter(id__in=last_20_book_ids))
@@ -90,19 +102,41 @@ def home_view(request):
 
     context = {
         'recommended_books': recommended_books,
+        'popular_books': popular_books,
+        'new_books': new_books,
+        'soon_books': soon_books,
         'last_books': last_books
     }
     return render(request, 'home.html', context)
 
 
+
+
 def book_detail(request, book_id):
+    user = request.user
     book = get_object_or_404(Book, id=book_id)
-    similar_books = hybrid_recommendations_for_book(book, top_n=10)
-    return render(request, 'book_detail.html', {'book': book, 'similar_books': similar_books})
+    in_cart = False
+    in_bookmarks = False
+    if user.is_authenticated:
+        in_cart = UserBookStatus.objects.filter(user=user, book=book, status=UserBookStatus.STATUS_CART).exists()
+        in_bookmarks = UserBookStatus.objects.filter(user=user, book=book, status=UserBookStatus.STATUS_WISHLIST).exists()
+    # book = get_object_or_404(Book, id=book_id)
+    user = request.user 
+    context = {
+        'book': book,
+        'in_cart': in_cart,
+        'in_bookmarks': in_bookmarks,
+        'csrf_token': get_token(request), 
+    }
+    return render(request, 'book_detail.html', context)
+
+
+
+
 
 
 @login_required
-def profile(request):
+def profile(request): 
     user_ratings_subquery = BookRating.objects.filter(
         user=request.user,
         book=OuterRef('pk')
@@ -111,11 +145,70 @@ def profile(request):
     books = Book.objects.annotate(
         user_rating=Subquery(user_ratings_subquery)
     ).filter(user_rating__isnull=False)
+ 
+    user = request.user
+    preferences, created = UserPreferences.objects.get_or_create(user=user)
+
+    if request.method == 'POST':
+        form = UserPreferencesForm(request.POST, instance=preferences, user=user)
+        if form.is_valid():
+            with transaction.atomic():
+                # Обновляем UserPreferences (т.к. поля ManyToMany через промежуточные модели, надо обновлять вручную)
+                FavoriteAuthors.objects.filter(userprofile=preferences).delete()
+                FavoriteGenres.objects.filter(userprofile=preferences).delete()
+                FavoriteTags.objects.filter(userprofile=preferences).delete()
+                DislikedGenres.objects.filter(userprofile=preferences).delete()
+                DislikedTags.objects.filter(userprofile=preferences).delete()
+
+                for author in form.cleaned_data['favorite_authors']:
+                    FavoriteAuthors.objects.create(userprofile=preferences, author=author)
+
+                for genre in form.cleaned_data['favorite_genres']:
+                    fg = FavoriteGenres(userprofile=preferences, genre=genre)
+                    try:
+                        fg.clean()
+                        fg.save()
+                    except Exception as e:
+                        messages.error(request, f'Ошибка при добавлении любимого жанра {genre}: {e}')
+
+                for tag in form.cleaned_data['favorite_tags']:
+                    ft = FavoriteTags(userprofile=preferences, tag=tag)
+                    try:
+                        ft.clean()
+                        ft.save()
+                    except Exception as e:
+                        messages.error(request, f'Ошибка при добавлении любимого тега {tag}: {e}')
+
+                for genre in form.cleaned_data['disliked_genres']:
+                    dg = DislikedGenres(userprofile=preferences, genre=genre)
+                    try:
+                        dg.clean()
+                        dg.save()
+                    except Exception as e:
+                        messages.error(request, f'Ошибка при добавлении нелюбимого жанра {genre}: {e}')
+
+                for tag in form.cleaned_data['disliked_tags']:
+                    dt = DislikedTags(userprofile=preferences, tag=tag)
+                    try:
+                        dt.clean()
+                        dt.save()
+                    except Exception as e:
+                        messages.error(request, f'Ошибка при добавлении нелюбимого тега {tag}: {e}')
+
+            messages.success(request, 'Настройки сохранены')
+            return redirect('profile')
+    else:
+        form = UserPreferencesForm(instance=preferences, user=user)
+
 
     context = {
         'books': books,
+        'form': form, 
     }
     return render(request, 'profile.html', context)
+
+
+
 
 
 @login_required
@@ -156,5 +249,4 @@ def registration(request):
     else:
         form = SignUpForm()
     return render(request, 'home.html', {'form': form})
-
 

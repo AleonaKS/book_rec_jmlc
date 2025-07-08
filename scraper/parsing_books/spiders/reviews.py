@@ -18,7 +18,7 @@ class LivelibScraper:
 
 
     def save_book_result(self, key, data):
-        with open('reviews_results_new.jsonl', 'a', encoding='utf-8') as f:
+        with open('reviews.jsonl', 'a', encoding='utf-8') as f:
             json_line = json.dumps({str(key): data}, ensure_ascii=False)
             f.write(json_line + '\n')
 
@@ -288,7 +288,7 @@ class LivelibScraper:
             logging.info(f"Общее время выполнения: {total_time:.2f} сек")
             logging.info(f"Обработано книг: {len(self.results)}")
             logging.info(f"Найдено и собрано отзывов: {len([r for r in self.results.values() if 'reviews' in r])}")
-            with open('reviews_results_new.json', 'w', encoding='utf-8') as f:
+            with open('reviews.json', 'w', encoding='utf-8') as f:
                 json.dump(self.results, f, ensure_ascii=False, indent=4)
             logging.info("Результаты сохранены.")
 
