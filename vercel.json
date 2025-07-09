@@ -1,5 +1,13 @@
 {
-"rewrites": [
-    {"source": "/(.*)", "destination": "/"}
-]
+    "builds": [{
+        "src": "books_site/wsgi.py",
+        "use": "@vercel/python",
+        "config": {"runtime": "python3.9"}
+    }],
+    "routes": [
+        {
+            "src": "/(.*)",
+            "desc": "books_site/wsgi.py"
+        }
+    ]
 }
