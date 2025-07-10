@@ -9,13 +9,13 @@ env/
 .venv/
 
 # Django stuff:
-spiders/*.json
+books_site/scraper/parsing_books/spiders/*.json
 *.log
 *.pot
 *.pyc
-*.sqlite3
-db.sqlite3
-!books_site/db.sqlite3
+# *.sqlite3
+# db.sqlite3
+# !books_site/db.sqlite3
 media/
 staticfiles/
 node_modules/
