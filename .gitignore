@@ -9,7 +9,6 @@ env/
 .venv/
 
 # Django stuff:
-scraper/parsing_books/spiders/*.json
 *.log
 *.pot
 *.pyc
@@ -58,6 +57,7 @@ scraper/parsing_books/scraper.log
 *.kv
 
 .csv 
+.json
 
 books/recommendations/nltk_lda.py 
 books_site/books/recommendations/utils.py
