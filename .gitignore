@@ -9,11 +9,13 @@ env/
 .venv/
 
 # Django stuff:
+spiders/*.json
 *.log
 *.pot
 *.pyc
 *.sqlite3
 db.sqlite3
+!books_site/db.sqlite3
 media/
 staticfiles/
 node_modules/
@@ -53,10 +55,9 @@ scraper/parsing_books/scraper.log
 # Model files, embeddings, large data files  
 *.pkl
 *.pth
-node2vec_embeddings.kv
+*.kv
 
-.csv
+.csv 
 
-books/recommendations/nltk_lda.py
-books/management/commands/embedding.py
+books/recommendations/nltk_lda.py 
 books_site/books/recommendations/utils.py
