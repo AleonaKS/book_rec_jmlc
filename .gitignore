@@ -9,7 +9,7 @@ env/
 .venv/
 
 # Django stuff:
-books_site/scraper/parsing_books/spiders/*.json
+scraper/parsing_books/spiders/*.json
 *.log
 *.pot
 *.pyc
