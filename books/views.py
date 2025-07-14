@@ -4,15 +4,16 @@ from django.contrib import messages
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.models import User 
 from django.contrib.auth.decorators import login_required 
-from django.http import JsonResponse 
+from django.http import JsonResponse, HttpResponseForbidden
 from django.views.decorators.http import require_GET, require_POST
 from django.middleware.csrf import get_token
 from django.db import transaction
-from django.db.models import OuterRef, Subquery 
+from django.db.models import OuterRef, Subquery, Exists,  Value, BooleanField
+from django.core.paginator import Paginator
 from haystack.query import SearchQuerySet
 from .filters import BookFilter 
 from .forms import SignUpForm, UserPreferencesForm #, LoginForm, BookRatingForm
-from .models import Book, Review, BookView, BookRating, UserBookStatus, UserPreferences
+from .models import Book, Genre, Publisher, Tag, Author, Series, Cycle, Review, BookView, BookRating, UserBookStatus, UserPreferences
 from .models import UserPreferences, FavoriteAuthors, FavoriteGenres, FavoriteTags, DislikedGenres, DislikedTags
 from books.recommendations.base_recommendations import recommendations_split, recommendations_for_anonymous, recommendations_for_user_without_preferences
 from books.recommendations.hybrid import hybrid_recommendations_for_user, hybrid_recommendations_for_book
@@ -73,6 +74,7 @@ def search_books(request):
     return render(request, 'search.html', context)
 
 
+
 def home_view(request):
     popular_books, new_books, soon_books = None, None, None
     if request.user.is_authenticated:
@@ -83,7 +85,7 @@ def home_view(request):
             prefs = user.userpreferences
             favorite_genres = prefs.favorite_genres.all().values_list('id', flat=True)
             favorite_tags = prefs.favorite_tags.all().values_list('id', flat=True)
-            recommended_books = hybrid_recommendations_for_user(user, top_n=30)
+            # recommended_books = hybrid_recommendations_for_user(user, top_n=30)
             popular_books, new_books, soon_books = recommendations_split(user, list(favorite_genres), list(favorite_tags), top_n=30)
         except UserPreferences.DoesNotExist:
             popular_books, new_books, soon_books = recommendations_for_user_without_preferences(user, top_n=30)
@@ -99,6 +101,11 @@ def home_view(request):
     last_20_book_ids = list(user_views.values_list('book_id', flat=True).distinct()[:20])
     books = list(Book.objects.filter(id__in=last_20_book_ids))
     last_books = sorted(books, key=lambda b: last_20_book_ids.index(b.id))
+
+    request.session['recommended_book_ids'] = [book.id for book in recommended_books] if recommended_books else []
+    request.session['popular_book_ids'] = [book.id for book in popular_books] if popular_books else []
+    request.session['new_book_ids'] = [book.id for book in new_books] if new_books else []
+    request.session['soon_book_ids'] = [book.id for book in soon_books] if soon_books else []
 
     context = {
         'recommended_books': recommended_books,
@@ -120,7 +127,6 @@ def book_detail(request, book_id):
     if user.is_authenticated:
         in_cart = UserBookStatus.objects.filter(user=user, book=book, status=UserBookStatus.STATUS_CART).exists()
         in_bookmarks = UserBookStatus.objects.filter(user=user, book=book, status=UserBookStatus.STATUS_WISHLIST).exists()
-    # book = get_object_or_404(Book, id=book_id)
     similar_books = hybrid_recommendations_for_book(book, top_n=10) 
     context = {
         'book': book,
@@ -135,6 +141,164 @@ def book_detail(request, book_id):
 
 
 
+#  ===================== 
+def catalog(request):
+    f = BookFilter(request.GET, queryset=Book.objects.all())
+    qs = f.qs
+
+    sort = request.GET.get('sort', 'popular')
+    if sort == 'price_asc':
+        qs = qs.order_by('price')
+    elif sort == 'price_desc':
+        qs = qs.order_by('-price')
+    elif sort == 'year_asc':
+        qs = qs.order_by('year_of_publishing')
+    elif sort == 'year_desc':
+        qs = qs.order_by('-year_of_publishing')
+    elif sort == 'rating_desc':
+        qs = qs.order_by('-rating_chitai_gorod')
+    else:
+        qs = qs.order_by('-votes_chitai_gorod', '-rating_chitai_gorod')
+
+    # Аннотации для пользователя
+    if request.user.is_authenticated:
+        user_book_status_qs = UserBookStatus.objects.filter(user=request.user, book=OuterRef('pk'))
+        qs = qs.annotate(
+            in_cart=Exists(user_book_status_qs.filter(status=UserBookStatus.STATUS_CART)),
+            in_bookmarks=Exists(user_book_status_qs.filter(status=UserBookStatus.STATUS_WISHLIST)),
+        )
+    else:
+        qs = qs.annotate(
+            in_cart=Value(False, output_field=BooleanField()),
+            in_bookmarks=Value(False, output_field=BooleanField()),
+        )
+
+    paginator = Paginator(qs, 50)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    authors = Author.objects.all().order_by('name')
+    series = Series.objects.all().order_by('name')
+    cycles = Cycle.objects.all().order_by('name')
+
+    context = {
+        'title': 'Каталог книг',
+        'authors': authors,
+        'series': series,
+        'cycles': cycles,
+        'filter': f,
+        'books': page_obj,
+        'genres': Genre.objects.all(),
+        'publishers': Publisher.objects.all(),
+        'tags': Tag.objects.all(),
+        'filter_params': request.GET,
+        'sort': sort,
+        'page_obj': page_obj,
+    }
+    return render(request, 'catalog.html', context)
+
+
+
+
+
+
+
+
+
+@login_required
+def books_by_user(request, user_id):
+    if request.user.id != user_id:
+        return HttpResponseForbidden()
+    user_ratings_subquery = BookRating.objects.filter(
+        user_id=user_id,
+        book=OuterRef('pk')
+    ).values('rating')[:1]
+    books = Book.objects.annotate(
+        user_rating=Subquery(user_ratings_subquery)
+    ).filter(user_rating__isnull=False)
+    return render(request, 'books_by_user.html', {'books': books})
+
+ 
+
+CATEGORY_NAMES = {
+    'recommended': 'Рекомендованные книги',
+    'popular': 'Популярные книги',
+    'new': 'Новые книги',
+    'soon': 'Скоро в продаже',
+}
+
+
+def books_by_category(request, category_slug=None):
+    books = Book.objects.all()
+    category_name = 'Книги'
+
+    if category_slug in ['recommended', 'popular', 'new', 'soon']:
+        session_key_map = {
+            'recommended': 'recommended_book_ids',
+            'popular': 'popular_book_ids',
+            'new': 'new_book_ids',
+            'soon': 'soon_book_ids',
+        }
+        book_ids = request.session.get(session_key_map.get(category_slug), [])
+        if not book_ids:
+            books = Book.objects.none()
+        else:
+            books_qs = Book.objects.filter(id__in=book_ids)
+
+            if request.user.is_authenticated:
+                user_book_status_qs = UserBookStatus.objects.filter(user=request.user, book=OuterRef('pk'))
+                books_qs = books_qs.annotate(
+                    in_cart=Exists(user_book_status_qs.filter(status=UserBookStatus.STATUS_CART)),
+                    in_bookmarks=Exists(user_book_status_qs.filter(status=UserBookStatus.STATUS_WISHLIST)),
+                )
+            else:
+                books_qs = books_qs.annotate(
+                    in_cart=Value(False, output_field=BooleanField()),
+                    in_bookmarks=Value(False, output_field=BooleanField()),
+                )
+
+            books = list(books_qs)
+            # Сортируем книги по порядку из book_ids
+            books.sort(key=lambda b: book_ids.index(b.id))
+
+        category_name = CATEGORY_NAMES.get(category_slug, 'Книги')
+
+    else:
+        author_name = request.GET.get('author')
+        series_name = request.GET.get('series')
+        cycle_name = request.GET.get('cycle')
+
+        if author_name:
+            books = books.filter(author__name=author_name)
+            category_name = f'Автор: {author_name}'
+        elif series_name:
+            books = books.filter(series__name=series_name)
+            category_name = f'Серия: {series_name}'
+        elif cycle_name:
+            books = books.filter(cycle__name=cycle_name)
+            category_name = f'Цикл: {cycle_name}'
+
+        if request.user.is_authenticated:
+            user_book_status_qs = UserBookStatus.objects.filter(user=request.user, book=OuterRef('pk'))
+            books = books.annotate(
+                in_cart=Exists(user_book_status_qs.filter(status=UserBookStatus.STATUS_CART)),
+                in_bookmarks=Exists(user_book_status_qs.filter(status=UserBookStatus.STATUS_WISHLIST)),
+            )
+        else:
+            books = books.annotate(
+                in_cart=Value(False, output_field=BooleanField()),
+                in_bookmarks=Value(False, output_field=BooleanField()),
+            )
+
+    context = {
+        'books': books,
+        'category_name': category_name,
+        'csrf_token': get_token(request),
+    }
+    return render(request, 'books_by_category.html', context)
+
+
+# ==========================
 
 
 @login_required
@@ -174,15 +338,30 @@ def profile(request):
 @login_required
 def cart(request):
     cart_items = UserBookStatus.objects.filter(user=request.user, status=UserBookStatus.STATUS_CART).select_related('book')
-    books = [item.book for item in cart_items]
-    return render(request, 'cart.html', {'books': books})
+    books = []
+    for item in cart_items:
+        book = item.book
+        book.in_cart = True
+        book.in_bookmarks = UserBookStatus.objects.filter(user=request.user, book=book, status=UserBookStatus.STATUS_WISHLIST).exists()
+        books.append(book)
+    return render(request, 'cart.html', {'books': books, 'title': 'Корзина'})
 
 
 @login_required
 def bookmarks(request):
     bookmarks_items = UserBookStatus.objects.filter(user=request.user, status=UserBookStatus.STATUS_WISHLIST).select_related('book')
-    books = [item.book for item in bookmarks_items]
-    return render(request, 'bookmarks.html', {'books': books})
+    books = []
+    for item in bookmarks_items:
+        book = item.book
+        book.in_bookmarks = True
+        book.in_cart = UserBookStatus.objects.filter(user=request.user, book=book, status=UserBookStatus.STATUS_CART).exists()
+        books.append(book)
+    context = {
+        'books': books,
+        'title': 'Закладки',
+    }
+    return render(request, 'bookmarks.html', context)
+
 
 
 def signup(request):

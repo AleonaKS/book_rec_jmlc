@@ -1,0 +1,182 @@
+{# sample/book_grid.html #} 
+
+<h2>{{ category_name }}</h2>
+
+<div class="book-grid">
+    {% for book in books %}
+    <div class="book-card">
+        <a href="{% url 'book_detail' book_id=book.id %}">
+            <img src="{{ book.image_link }}" alt="{{ book.title }}">
+        </a>
+        <div class="title">{{ book.title }}</div>
+        <div class="author">
+            {% for author in book.author.all %}
+                {{ author.name }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </div>
+
+        <div class="book-actions"> 
+            <button class="action-btn add-to-cart-btn {% if book.in_cart %}active{% endif %}" 
+                    data-book-id="{{ book.id }}" aria-label="Добавить в корзину">
+                <span class="fa-solid fa-cart-shopping"></span>
+                {% if book.in_cart %}В корзине{% else %}В корзину{% endif %}
+            </button>
+            <i class="fas fa-bookmark bookmark-icon {% if book.in_bookmarks %}active{% endif %}" 
+               data-book-id="{{ book.id }}" aria-label="Отложенное"></i>
+        </div>
+    </div>
+    {% empty %}
+        <p>Книги не найдены.</p>
+    {% endfor %}
+</div>
+
+
+<style>
+
+.book-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 19px;
+    justify-content: center;
+    width: 100%;
+}
+
+.book-card {
+    width: 180px;
+    padding: 0.5rem;
+    border-radius: 5px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 320px;  
+}
+
+.book-card img {
+    width: 100%;
+    height: auto;
+    border-radius: 3px;
+}
+
+.book-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: auto;
+    justify-content: center;
+    max-width: 160px;  
+    margin-left: auto;
+    margin-right: auto;
+    flex-wrap: nowrap;
+}
+
+.action-btn {
+    background-color: #3AAFA9;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.3s;
+    flex-shrink: 0;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    min-width: 90px;
+}
+
+.bookmark-icon {
+    font-size: 26px;
+    color: #777;
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.3s;
+    flex-shrink: 0;
+}
+
+.bookmark-icon:hover {
+    color: #7bc8a8;
+}
+
+.bookmark-icon.active {
+    color: #7bc8a8;  
+}
+
+.action-btn:hover {
+    background-color: #116466;
+}
+
+.action-btn.active {
+    background-color: #116466;  
+    color: #d4f1f4;  
+}
+
+.title {
+    font-weight: 600;
+    margin-top: 0.5rem;
+    text-align: center;
+}
+
+.author {
+    font-size: 0.85rem;
+    color: #555;
+    text-align: center;
+}
+
+</style>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const csrftoken = '{{ csrf_token }}';
+
+    function postData(url = '', data = {}) {
+        return fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify(data),
+            credentials: 'include',
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Ошибка сети');
+            return response.json();
+        });
+    }
+
+    document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const bookId = button.dataset.bookId;
+            const inCart = button.classList.contains('active');
+
+            const url = inCart ? '/api/cart/remove/' : '/api/cart/add/';
+            postData(url, { book_id: bookId })
+                .then(() => {
+                    button.classList.toggle('active');
+                    button.innerHTML = inCart ? '<span class="fa-solid fa-cart-shopping"></span> В корзину' : '<span class="fa-solid fa-cart-shopping"></span> В корзине';
+                    alert(inCart ? 'Книга удалена из корзины' : 'Книга добавлена в корзину');
+                })
+                .catch(() => alert('Ошибка при обновлении корзины'));
+        });
+    });
+
+    document.querySelectorAll('.bookmark-icon').forEach(icon => {
+        icon.addEventListener('click', () => {
+            const bookId = icon.dataset.bookId;
+            const inBookmarks = icon.classList.contains('active');
+
+            const url = inBookmarks ? '/api/bookmarks/remove/' : '/api/bookmarks/add/';
+            postData(url, { book_id: bookId })
+                .then(() => {
+                    icon.classList.toggle('active');
+                    alert(inBookmarks ? 'Книга удалена из закладок' : 'Книга добавлена в закладки');
+                })
+                .catch(() => alert('Ошибка при обновлении закладок'));
+        });
+    });
+});
+</script> 

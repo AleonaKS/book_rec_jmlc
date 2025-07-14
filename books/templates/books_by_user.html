@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Книги пользователя {{ request.user.username }}</h1>
+
+{% include 'sample/book_list.html' with books=books %}
+
+{% endblock %}

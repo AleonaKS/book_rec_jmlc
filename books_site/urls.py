@@ -50,6 +50,13 @@ urlpatterns = [
     path('api/cart/remove/', remove_from_cart, name='remove_from_cart'),
     path('api/bookmarks/add/', add_to_bookmarks, name='add_to_bookmarks'),
     path('api/bookmarks/remove/', remove_from_bookmarks, name='remove_from_bookmarks'),
+
+    path('books/user/<int:user_id>/', views.books_by_user, name='books_by_user'),
+    path('books/', views.books_by_category, name='books_by_category'),  # без category_slug
+    path('books/<category_slug>/', views.books_by_category, name='books_by_category'),
+
+
+    path('catalog/', views.catalog, name='catalog'), 
 ]
 
  

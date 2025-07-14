@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мой сайт</title>
+    <title>{% block title %}Мой сайт{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'styles.css' %}"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
@@ -13,7 +13,7 @@
     <div class="top-bar">
         <a href="{% url 'home' %}" class="icons" aria-label="Домой"><span class="fas fa-home"></span>  
         </a>
-        <a href="#" class="catalog"><span class="fa-solid fa-bars"></span>Каталог</a>
+        <a href="{% url 'catalog' %}" class="catalog"><span class="fa-solid fa-bars"></span>Каталог</a>
  
         <div class="search-bar" style="position: relative;">
             <form method="get" action="{% url 'search_books' %}" autocomplete="off">
@@ -43,6 +43,7 @@
     </div>
 
 <!-- Модальное окно авторизации -->
+ <div class="page-login"> 
 <div id="loginModal" class="modal">
     <div class="modal-content">
         <span class="close">&times;</span> 
@@ -85,14 +86,13 @@
         </div>
     </div>
 </div>
+</div>
 
-<script>
-    const loginUrl = "{% url 'login' %}";
-</script>
+<script> const loginUrl = "{% url 'login' %}"; </script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="{% static 'main.js' %}"></script>
 
-        <div class="content">
+<div class="content">
     {% block content %}
     {% endblock %}
 </div>

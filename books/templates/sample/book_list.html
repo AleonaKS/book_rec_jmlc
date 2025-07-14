@@ -1,14 +1,99 @@
-<div class="scroll-container">
-    {% for book in books %}
-        <div class="scroll-item">
-            <a href="{% url 'book_detail' book_id=book.id %}">
-                <img src="{{ book.image_link }}" alt="{{ book.title }}">
-            </a>
-            <h3>{{ book.title }}</h3>
-            {% for author in book.author.all %}
-            <p>{{ author.name }}{% if not forloop.last %}, {% endif %}</p> 
-            {% endfor %}
-        </div>
-    {% endfor %}
-    
+{# sample/book_list.html #} 
+
+<div class="book-list-block">
+    {% if section_title %}
+    <h2>
+        {{ section_title }}
+        {% if section_url %}
+        <a href="{{ section_url }}" class="section-arrow" title="Перейти к полному списку">
+            ➔
+        </a>
+        {% endif %}
+    </h2>
+    {% endif %}
+
+    <div class="scroll-container">
+        {% for book in books %}
+            <div class="scroll-item">
+                <a href="{% url 'book_detail' book_id=book.id %}">
+                    <img src="{{ book.image_link }}" alt="{{ book.title }}">
+                </a>
+                <h3>{{ book.title }}</h3>
+                {% for author in book.author.all %}
+                    <p>{{ author.name }}{% if not forloop.last %}, {% endif %}</p> 
+                {% endfor %}
+                {% if book.user_rating %}
+                <div class="rating-stars">
+                    {% for i in "12345"|slice:":5" %}
+                        {% if forloop.counter <= book.user_rating %}
+                            <span class="star filled">★</span>
+                        {% else %}
+                            <span class="star">☆</span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        {% empty %}
+            <p>Книги не найдены.</p>
+        {% endfor %}
+    </div>
 </div>
+
+<style>
+.book-list-block {
+    margin-bottom: 2rem;
+}
+h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+}
+.section-arrow {
+    font-size: 1.5rem;
+    text-decoration: none;
+    color: #3AAFA9;
+    transition: color 0.3s;
+}
+.section-arrow:hover {
+    color: #116466;
+}
+
+.scroll-container {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    white-space: nowrap;
+    width: 100%;
+    padding-bottom: 0.5rem;
+}
+.scroll-item {
+    flex: 0 0 auto;
+    margin: 0 20px;
+    text-align: center;
+    max-width: 180px;
+}
+.scroll-item img {
+    height: 250px;
+    border-radius: 20px;
+    cursor: pointer;
+}
+.scroll-item h3 {
+    margin-top: 10px;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    font-size: 1.1em;
+}
+.rating-stars {
+    margin-top: 5px;
+}
+.rating-stars .star {
+    color: #ccc;
+    font-size: 1.2rem;
+}
+.rating-stars .star.filled {
+    color: gold;
+}
+</style>

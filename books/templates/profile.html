@@ -4,8 +4,10 @@
     {% if user.is_authenticated %}
         <p>Личный кабинет, {{ user.username }}!</p>
 
-        <!-- <h2>Ваши оценки</h2>
-        {% include 'sample/book_list.html' with books=books %}  -->
+<h2>Ваши оценки 
+{% include 'sample/book_list.html' with books=books show_actions=False %}
+
+
 
         <form action="{% url 'logout' %}" method="post">
             {% csrf_token %}
@@ -349,8 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
 .score-stars input[type="radio"]:checked ~ .star,
 .score-stars input[type="radio"]:checked ~ .star ~ .star {
     color: gold;
-}    
-/* Добавим в style section */
+}     
 .checkbox-multi-col label[disabled] {
   opacity: 0.5;
   cursor: not-allowed;

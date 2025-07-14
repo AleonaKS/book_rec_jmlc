@@ -1,24 +1,23 @@
-{% extends 'base.html' %}  
+{% extends 'base.html' %}
 
- {% block content %} 
-     {% if user.is_authenticated %}
-     <h1>Добро пожаловать на главную страницу, {{ user.username }}!</h1> 
-     {% endif %}
+{% block content %}
+    {% if user.is_authenticated %}
+        <h1>Добро пожаловать на главную страницу, {{ user.username }}!</h1>
+    {% endif %}
 
-   <h1>Персональные рекомендации</h1>  
-   {% include 'sample/book_list.html' with books=recommended_books %}
-   
-   <h1>Популярные книги</h1>  
-   {% include 'sample/book_list.html' with books=popular_books %}
+  {% url 'books_by_category' 'recommended' as recommended_url %}
+{% include 'sample/book_list.html' with books=recommended_books section_title="Персональные рекомендации" section_url=recommended_url %}
+ 
+  {% url 'books_by_category' 'popular' as popular_url %}
+{% include 'sample/book_list.html' with books=popular_books section_title="Популярные книги" section_url=popular_url %}
+ 
+  {% url 'books_by_category' 'new' as new_url %}
+{% include 'sample/book_list.html' with books=new_books section_title="Новинки" section_url=new_url %}
+ 
+  {% url 'books_by_category' 'soon' as soon_url %}
+{% include 'sample/book_list.html' with books=soon_books section_title="Скоро" section_url=soon_url %}
 
-    <h1>Новинки</h1>  
-   {% include 'sample/book_list.html' with books=new_books %}
-
-   <h1>Скоро</h1>  
-   {% include 'sample/book_list.html' with books=soon_books %}
-
-   <h1>Последние просмотренные книги</h1>  
-   {% include 'sample/book_list.html' with books=last_books %}
-</div>
-
+   {% url 'books_by_category' 'last' as last_url %}
+{% include 'sample/book_list.html' with books=last_books section_title="Последние просмотренные книги" section_url=last_url %}
+    
 {% endblock %}

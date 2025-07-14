@@ -1,0 +1,437 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="catalog-navigation">
+    <a href="#" id="tabBooks" class="active">Книги</a>
+    <a href="#" id="tabAuthors">Авторы</a>
+    <a href="#" id="tabSeries">Серии</a>
+    <a href="#" id="tabCycles">Циклы</a>
+</div>
+
+<div id="contentBooks" class="tab-content">
+
+<form method="get" action="">
+  <div class="filter-grid">
+    <div class="col col1">
+      <label for="{{ filter.form.genre.id_for_label }}"></label>
+      {{ filter.form.genre }}
+
+      <label style="margin-top: 15px;"></label>
+      <button type="button" id="toggle-tags">Теги</button>
+      <input type="text" id="tags-search" placeholder="Поиск тегов..." style="display:none;">
+      <div id="tags-checkboxes" style="display:none;">
+        {% for checkbox in filter.form.tags %}
+          <label>{{ checkbox.tag }} {{ checkbox.choice_label }}</label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="col col2">
+      <label for="{{ filter.form.publisher.id_for_label }}"></label>
+      {{ filter.form.publisher }}
+
+      <div class="age-restriction-row">
+        <label for="id_age_restriction">Возрастные ограничения:</label>
+        <select name="age_restriction" id="id_age_restriction">
+          <option value="" {% if filter_params.age_restriction == "" %}selected{% endif %}>Без ограничений</option>
+          <option value="0+" {% if filter_params.age_restriction == '0+' %}selected{% endif %}>0+</option>
+          <option value="6+" {% if filter_params.age_restriction == '6+' %}selected{% endif %}>6+</option>
+          <option value="12+" {% if filter_params.age_restriction == '12+' %}selected{% endif %}>12+</option>
+          <option value="16+" {% if filter_params.age_restriction == '16+' %}selected{% endif %}>16+</option>
+          <option value="18+" {% if filter_params.age_restriction == '18+' %}selected{% endif %}>18+</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="col col3"> 
+      <label><input type="checkbox" name="new" value="1" {% if filter_params.new == '1' %}checked{% endif %}> Новые</label>
+      <label><input type="checkbox" name="soon" value="1" {% if filter_params.soon == '1' %}checked{% endif %}> Скоро</label>
+    </div>
+  </div>
+
+  <div class="filter-bottom-row">
+    <label for="id_sort">Сортировка:</label>
+    <select name="sort" id="id_sort">
+        <option value="popular" {% if sort == 'popular' %}selected{% endif %}>Популярные</option>
+        <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Цена ↑</option>
+        <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Цена ↓</option>
+        <option value="year_asc" {% if sort == 'year_asc' %}selected{% endif %}>Год ↑</option>
+        <option value="year_desc" {% if sort == 'year_desc' %}selected{% endif %}>Год ↓</option>
+        <option value="rating_desc" {% if sort == 'rating_desc' %}selected{% endif %}>Рейтинг</option>
+    </select>
+
+    <button type="submit">Применить</button>
+  </div>
+</form>
+
+{% include 'sample/book_grid.html' with books=books section_title=None section_url=None %}
+
+</div>
+
+<div id="contentAuthors" class="tab-content" style="display:none;">
+  <label for="author-search" class="search-label">Поиск авторов:</label>
+  <input type="text" id="author-search" placeholder="Введите имя автора..." class="search-input">
+
+  <ul id="author-list" class="search-list">
+    {% for author in authors %}
+      <li class="search-item">
+        <a href="{% url 'books_by_category' 'all' %}?author={{ author.name|urlencode }}" class="search-link">
+          {{ author.name }}
+        </a>
+      </li>
+    {% empty %}
+      <li>Авторы не найдены</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div id="contentSeries" class="tab-content" style="display:none;">
+  <label for="series-search" class="search-label">Поиск серий:</label>
+  <input type="text" id="series-search" placeholder="Введите название серии..." class="search-input">
+
+  <ul id="series-list" class="search-list">
+    {% for serie in series %}
+      <li class="search-item">
+        <a href="{% url 'books_by_category' 'all' %}?series={{ serie.name|urlencode }}" class="search-link">
+          {{ serie.name }}
+        </a>
+      </li>
+    {% empty %}
+      <li>Серии не найдены</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div id="contentCycles" class="tab-content" style="display:none;">
+  <label for="cycle-search" class="search-label">Поиск циклов:</label>
+  <input type="text" id="cycle-search" placeholder="Введите название цикла..." class="search-input">
+
+  <ul id="cycle-list" class="search-list">
+    {% for cycle in cycles %}
+      <li class="search-item">
+        <a href="{% url 'books_by_category' 'all' %}?cycle={{ cycle.name|urlencode }}" class="search-link">
+          {{ cycle.name }}
+        </a>
+      </li>
+    {% empty %}
+      <li>Циклы не найдены</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<style>
+/* --- Навигация вкладок --- */
+.catalog-navigation {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0 40px 0;
+}
+.catalog-navigation a {
+    text-decoration: none;
+    padding: 12px 28px;
+    color: #444;
+    border-bottom: 3px solid transparent;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: border-color 0.3s ease, color 0.3s ease;
+    cursor: pointer;
+    border-radius: 4px 4px 0 0;
+    background-color: #f9f9f9;
+}
+.catalog-navigation a:hover {
+    color: #116466;
+    border-bottom-color: #116466;
+    background-color: #e0f0ef;
+}
+.catalog-navigation a.active {
+    border-bottom-color: #116466;
+    color: #116466;
+    background-color: #d0e8e5;
+    font-weight: 700;
+}
+
+/* --- Форма фильтров --- */
+form div {
+    margin-bottom: 15px;
+}
+
+label {
+    font-weight: 600;
+    color: #333;
+    display: block;
+    margin-bottom: 6px;
+}
+
+select, input[type="checkbox"] {
+    cursor: pointer;
+}
+
+/* Кнопка Применить */
+form button[type="submit"] {
+    background-color: #116466;
+    color: white;
+    padding: 10px 28px;
+    font-size: 1rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 6px;
+    box-shadow: 0 4px 8px rgba(17, 100, 102, 0.3);
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+form button[type="submit"]:hover {
+    background-color: #0e524d;
+    box-shadow: 0 6px 12px rgba(14, 82, 77, 0.5);
+}
+
+/* Кнопка переключения тегов */
+#toggle-tags {
+    background-color: #116466;
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: 0 3px 6px rgba(17, 100, 102, 0.3);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.95rem;
+}
+#toggle-tags:hover {
+    background-color: #0e524d;
+    box-shadow: 0 5px 10px rgba(14, 82, 77, 0.5);
+}
+
+/* Стрелка в кнопке переключения тегов */
+#toggle-tags::after {
+    content: "▼";
+    display: inline-block;
+    font-size: 0.7rem;
+    transition: transform 0.3s ease;
+}
+#toggle-tags.active::after {
+    transform: rotate(180deg);
+}
+ 
+#tags-search {
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 8px;
+}
+
+/* Блок с чекбоксами тегов */
+#tags-checkboxes label {
+    cursor: pointer;
+    user-select: none;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+#tags-checkboxes label:hover {
+    background-color: #e0f0ef;
+}
+
+/* Чекбоксы и лейблы */
+input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+    margin-right: 8px;
+    accent-color: #116466;
+}
+
+/* Селекты */
+select {
+    padding: 6px 10px;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    min-width: 180px;
+    transition: border-color 0.3s ease;
+}
+select:focus {
+    outline: none;
+    border-color: #116466;
+    box-shadow: 0 0 5px rgba(17, 100, 102, 0.6);
+}
+
+/* --- Сетка фильтров --- */
+.filter-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 30px 40px;
+  margin-bottom: 25px;
+}
+
+.filter-grid .col label {
+  font-weight: 600;
+  color: #333;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.filter-grid .col1 label + label,
+.filter-grid .col2 label + label,
+.filter-grid .col3 label + label {
+  margin-top: 15px;
+}
+
+/* Возрастные ограничения - строка */
+.age-restriction-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.age-restriction-row label {
+  margin: 0;
+  min-width: 160px;
+}
+
+/* Поиск и списки авторов, серий, циклов */
+.search-label {
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.search-input {
+  width: 100%;
+  padding: 6px 10px;
+  margin-bottom: 15px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+/* Списки */
+.search-list {
+  list-style: none;
+  padding-left: 0;
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+/* Каждый элемент списка */
+.search-item {
+  padding: 8px 12px;
+  border-left: 4px solid #116466;
+  border-right: 4px solid #116466;
+  margin-bottom: 6px;
+  position: relative;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+/* Стрелочка справа */
+.search-item::after {
+  content: ">";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #116466;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+/* При наведении */
+.search-item:hover {
+  background-color: #e0f0ef;
+}
+
+/* Ссылки внутри */
+.search-link {
+  color: #116466;
+  text-decoration: none;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Убираем дефолтные отступы у li */
+.search-list li:last-child {
+  margin-bottom: 0;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Вкладки
+    const tabs = {
+        tabBooks: 'contentBooks',
+        tabAuthors: 'contentAuthors',
+        tabSeries: 'contentSeries',
+        tabCycles: 'contentCycles',
+    };
+    Object.keys(tabs).forEach(tabId => {
+        const tab = document.getElementById(tabId);
+        tab.addEventListener('click', function (e) {
+            e.preventDefault();
+            Object.keys(tabs).forEach(id => {
+                document.getElementById(id).classList.remove('active');
+                document.getElementById(tabs[id]).style.display = 'none';
+            });
+            this.classList.add('active');
+            document.getElementById(tabs[tabId]).style.display = 'block';
+        });
+    });
+
+    // Теги: переключение видимости и поиск
+    const toggleBtn = document.getElementById('toggle-tags');
+    const searchInput = document.getElementById('tags-search');
+    const checkboxesDiv = document.getElementById('tags-checkboxes');
+
+    toggleBtn.addEventListener('click', function() {
+        const isVisible = checkboxesDiv.style.display === 'block';
+        checkboxesDiv.style.display = isVisible ? 'none' : 'block';
+        searchInput.style.display = isVisible ? 'none' : 'block';
+        toggleBtn.classList.toggle('active', !isVisible);
+    });
+
+    searchInput.addEventListener('input', function() {
+        const filter = this.value.toLowerCase();
+        const labels = checkboxesDiv.querySelectorAll('label');
+        labels.forEach(label => {
+            const text = label.textContent.toLowerCase();
+            label.style.display = text.includes(filter) ? '' : 'none';
+        });
+    });
+
+    // Универсальная функция поиска по списку
+    function setupSearch(inputId, listId) {
+      const input = document.getElementById(inputId);
+      const list = document.getElementById(listId);
+
+      input.addEventListener('input', () => {
+        const filter = input.value.toLowerCase();
+        const items = list.querySelectorAll('li');
+
+        items.forEach(item => {
+          const text = item.textContent.toLowerCase();
+          item.style.display = text.includes(filter) ? '' : 'none';
+        });
+      });
+    }
+
+    // Инициализируем поиск для авторов, серий и циклов
+    setupSearch('author-search', 'author-list');
+    setupSearch('series-search', 'series-list');
+    setupSearch('cycle-search', 'cycle-list');
+});
+</script>
+
+{% endblock %}
