@@ -5,7 +5,7 @@
         <p>Личный кабинет, {{ user.username }}!</p>
 
         <!-- <h2>Ваши оценки</h2>
-        {% include 'book_list.html' with books=books %}  -->
+        {% include 'sample/book_list.html' with books=books %}  -->
 
         <form action="{% url 'logout' %}" method="post">
             {% csrf_token %}
@@ -16,366 +16,350 @@
 
 
 <div class="container mt-4">
-    <h2>Личный кабинет — настройки предпочтений</h2>
+    <h2>Личный кабинет — настройки предпочтений</h2> 
 
     {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+      {% endfor %}
     {% endif %}
 
     <form method="post" novalidate>
-        {% csrf_token %}
+      {% csrf_token %}
 
-        <!-- Любимые авторы -->
+  {# Любимые авторы #}
+{% include 'sample/preference_block.html' with title="Любимые авторы" search_placeholder="авторов" block_id="favoriteAuthorsBlock" checkboxes_id="favoriteAuthorsCheckboxes" form_field=form.favorite_authors favorites=userpreferences.favoriteauthors_set.all item_type="favoriteauthors" score_input_name="favoriteauthors_score" %}
 
-<div>
-  {# --- Любимые авторы --- #}
-  <div class="toggle-button" role="button" tabindex="0" aria-expanded="false" aria-controls="favoriteAuthorsBlock">
-    Любимые авторы <span class="arrow">▼</span>
-  </div>
-  <div id="favoriteAuthorsBlock" class="collapsible-content">
-    <input type="text" class="form-control mb-2 search-input" placeholder="Поиск авторов..." data-target="favoriteAuthorsCheckboxes" autocomplete="off" aria-label="Поиск авторов" />
-    <div id="favoriteAuthorsCheckboxes" class="checkbox-multi-col">
-      {% with checked=form.favorite_authors.value %}
-        {% for checkbox in form.favorite_authors %}
-          <label class="form-check-label d-block" data-name="{{ checkbox.choice_label|lower }}">
-            {{ checkbox.tag }} {{ checkbox.choice_label }}
-          </label>
-        {% endfor %}
-      {% endwith %}
-    </div>
-  </div>
+    {# Любимые жанры #}
+{% include 'sample/preference_block.html' with title="Любимые жанры" search_placeholder="жанров" block_id="favoriteGenresBlock" checkboxes_id="favoriteGenresCheckboxes" form_field=form.favorite_genres favorites=userpreferences.favoritegenres_set.all item_type="favoritegenres" score_input_name="favoritegenres_score" %}
 
-  {# Выпадающий список с выбранными авторами и score #}
-  <details class="mt-2">
-    <summary>Ваши любимые авторы и их score</summary>
-    <ul>
-      {% for fav in userpreferences.favoriteauthors_set.all %}
-        <li>
-          {{ fav.author.name }}
-          <span class="score-stars">
-            {% for i in "12345678910"|slice:":10" %}
-  {% if forloop.counter <= fav.score|floatformat:0 %}
-    <span class="star filled-green">★</span>
-  {% else %}
-    <span class="star">☆</span>
-  {% endif %}
-{% endfor %}
+    {# Любимые теги #}
+{% include 'sample/preference_block.html' with title="Любимые теги" search_placeholder="тегов" block_id="favoriteTagsBlock" checkboxes_id="favoriteTagsCheckboxes" form_field=form.favorite_tags favorites=userpreferences.favoritetags_set.all item_type="favoritetags" score_input_name="favoritetags_score" %}
 
-          </span>
-        </li>
-      {% empty %}
-        <li>Нет выбранных авторов</li>
-      {% endfor %}
-    </ul>
-  </details>
-</div>
+    {# Нелюбимые жанры #}
+{% include 'sample/preference_block.html' with title="Нелюбимые жанры" search_placeholder="жанров" block_id="dislikedGenresBlock" checkboxes_id="dislikedGenresCheckboxes" form_field=form.disliked_genres favorites=userpreferences.dislikedgenres_set.all item_type="dislikedgenres" score_input_name="dislikedgenres_score" %}
 
-<hr>
+    {# Нелюбимые теги #}
+{% include 'sample/preference_block.html' with title="Нелюбимые теги" search_placeholder="тегов" block_id="dislikedTagsBlock" checkboxes_id="dislikedTagsCheckboxes" form_field=form.disliked_tags favorites=userpreferences.dislikedtags_set.all item_type="dislikedtags" score_input_name="dislikedtags_score" %}
 
-<div>
-  {# --- Любимые жанры --- #}
-  <div class="toggle-button" role="button" tabindex="0" aria-expanded="false" aria-controls="favoriteGenresBlock">
-    Любимые жанры <span class="arrow">▼</span>
-  </div>
-  <div id="favoriteGenresBlock" class="collapsible-content">
-    <input type="text" class="form-control mb-2 search-input" placeholder="Поиск жанров..." data-target="favoriteGenresCheckboxes" autocomplete="off" aria-label="Поиск жанров" />
-    <div id="favoriteGenresCheckboxes" class="checkbox-multi-col">
-      {% with checked=form.favorite_genres.value %}
-        {% for checkbox in form.favorite_genres %}
-          <label class="form-check-label d-block" data-name="{{ checkbox.choice_label|lower }}">
-            {{ checkbox.tag }} {{ checkbox.choice_label }}
-          </label>
-        {% endfor %}
-      {% endwith %}
-    </div>
-  </div>
 
-  <details class="mt-2">
-    <summary>Ваши любимые жанры и их score</summary>
-    <ul>
-      {% for fav in userpreferences.favoritegenres_set.all %}
-        <li>
-          {{ fav.genre.name }}
-          <span class="score-stars">
-            {% for i in "12345678910"|slice:":10" %}
-              {% if forloop.counter <= fav.score|floatformat:0 %}
+      <button type="submit" class="btn btn-primary mt-3">Сохранить</button>
+    </form>
 
-                <span class="star filled-green">★</span>
-              {% else %}
-                <span class="star">☆</span>
-              {% endif %}
+    {% if form.errors %}
+    <div class="alert alert-danger">
+        <strong>Ошибки:</strong>
+        <ul>
+        {% for field, errors in form.errors.items %}
+            {% for error in errors %}
+            <li>{{ error }}</li>
             {% endfor %}
-          </span>
-        </li>
-      {% empty %}
-        <li>Нет выбранных жанров</li>
-      {% endfor %}
-    </ul>
-  </details>
-</div>
-
-<hr>
-
-<div>
-  {# --- Любимые теги --- #}
-  <div class="toggle-button" role="button" tabindex="0" aria-expanded="false" aria-controls="favoriteTagsBlock">
-    Любимые теги <span class="arrow">▼</span>
-  </div>
-  <div id="favoriteTagsBlock" class="collapsible-content">
-    <input type="text" class="form-control mb-2 search-input" placeholder="Поиск тегов..." data-target="favoriteTagsCheckboxes" autocomplete="off" aria-label="Поиск тегов" />
-    <div id="favoriteTagsCheckboxes" class="checkbox-multi-col">
-      {% with checked=form.favorite_tags.value %}
-        {% for checkbox in form.favorite_tags %}
-          <label class="form-check-label d-block" data-name="{{ checkbox.choice_label|lower }}">
-            {{ checkbox.tag }} {{ checkbox.choice_label }}
-          </label>
         {% endfor %}
-      {% endwith %}
+        </ul>
     </div>
+    {% endif %}
   </div>
 
-  <details class="mt-2">
-    <summary>Ваши любимые теги и их score</summary>
-    <ul>
-      {% for fav in userpreferences.favoritetags_set.all %}
-        <li>
-          {{ fav.tag.name }}
-          <span class="score-stars">
-            {% for i in "12345678910"|slice:":10" %}
-              {% if forloop.counter <= fav.score|floatformat:0 %}
 
-                <span class="star filled-green">★</span>
-              {% else %}
-                <span class="star">☆</span>
-              {% endif %}
-            {% endfor %}
-          </span>
-        </li>
-      {% empty %}
-        <li>Нет выбранных тегов</li>
-      {% endfor %}
-    </ul>
-  </details>
-</div>
 
-<hr>
-
-<div>
-  {# --- Нелюбимые жанры --- #}
-  <div class="toggle-button" role="button" tabindex="0" aria-expanded="false" aria-controls="dislikedGenresBlock">
-    Нелюбимые жанры <span class="arrow">▼</span>
-  </div>
-  <div id="dislikedGenresBlock" class="collapsible-content">
-    <input type="text" class="form-control mb-2 search-input" placeholder="Поиск жанров..." data-target="dislikedGenresCheckboxes" autocomplete="off" aria-label="Поиск жанров" />
-    <div id="dislikedGenresCheckboxes" class="checkbox-multi-col">
-      {% with checked=form.disliked_genres.value %}
-        {% for checkbox in form.disliked_genres %}
-          <label class="form-check-label d-block" data-name="{{ checkbox.choice_label|lower }}">
-            {{ checkbox.tag }} {{ checkbox.choice_label }}
-          </label>
-        {% endfor %}
-      {% endwith %}
-    </div>
-  </div>
-
-  <details class="mt-2">
-    <summary>Ваши нелюбимые жанры и их score</summary>
-    <ul>
-      {% for dis in userpreferences.dislikedgenres_set.all %}
-        <li>
-          {{ dis.genre.name }}
-          <span class="score-stars">
-            {% for i in "12345678910"|slice:":10" %}
-             {% if forloop.counter <= fav.score|floatformat:0 %}
-
-                <span class="star filled-red">★</span>
-              {% else %}
-                <span class="star">☆</span>
-              {% endif %}
-            {% endfor %}
-          </span>
-        </li>
-      {% empty %}
-        <li>Нет выбранных жанров</li>
-      {% endfor %}
-    </ul>
-  </details>
-</div>
-
-<hr>
-
-<div>
-  {# --- Нелюбимые теги --- #}
-  <div class="toggle-button" role="button" tabindex="0" aria-expanded="false" aria-controls="dislikedTagsBlock">
-    Нелюбимые теги <span class="arrow">▼</span>
-  </div>
-  <div id="dislikedTagsBlock" class="collapsible-content">
-    <input type="text" class="form-control mb-2 search-input" placeholder="Поиск тегов..." data-target="dislikedTagsCheckboxes" autocomplete="off" aria-label="Поиск тегов" />
-    <div id="dislikedTagsCheckboxes" class="checkbox-multi-col">
-      {% with checked=form.disliked_tags.value %}
-        {% for checkbox in form.disliked_tags %}
-          <label class="form-check-label d-block" data-name="{{ checkbox.choice_label|lower }}">
-            {{ checkbox.tag }} {{ checkbox.choice_label }}
-          </label>
-        {% endfor %}
-      {% endwith %}
-    </div>
-  </div>
-
-  <details class="mt-2">
-    <summary>Ваши нелюбимые теги и их score</summary>
-    <ul>
-      {% for dis in userpreferences.dislikedtags_set.all %}
-        <li>
-          {{ dis.tag.name }}
-          <span class="score-stars">
-            {% for i in "12345678910"|slice:":10" %}
-             {% if forloop.counter <= fav.score|floatformat:0 %}
-
-                <span class="star filled-red">★</span>
-              {% else %}
-                <span class="star">☆</span>
-              {% endif %}
-            {% endfor %}
-          </span>
-        </li>
-      {% empty %}
-        <li>Нет выбранных тегов</li>
-      {% endfor %}
-    </ul>
-  </details>
-</div>
-
-    
-
-    <button type="submit" class="btn btn-primary mt-3">Сохранить</button>
-  </form>
-
-</div>
-
+  
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const input = document.getElementById('searchFavoriteAuthors');
-    const container = document.getElementById('favoriteAuthorsContainer');
+function initializeStars() {
+  document.querySelectorAll('.score-stars.editable').forEach(starsContainer => {
+    const stars = starsContainer.querySelectorAll('.star');
+    const score = parseInt(starsContainer.dataset.score) || 0;
+    const hiddenInput = starsContainer.nextElementSibling;
+    // Устанавливаем начальное состояние звезд
+    stars.forEach(star => {
+      const starValue = parseInt(star.dataset.value);
+      star.classList.toggle('filled', starValue <= score);
+      star.textContent = starValue <= score ? '★' : '☆';
+    });
+    if (hiddenInput && hiddenInput.type === 'hidden') {
+      hiddenInput.value = score;
+    }
+  });
+}
+  // Инициализация при загрузке
+  initializeStars();
 
-    input.addEventListener('input', function() {
-      const filter = this.value.trim().toLowerCase();
+  // Обработчики для  звездочек
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('star')) {
+        const star = e.target;
+        const starsContainer = star.closest('.score-stars');
+        const stars = starsContainer.querySelectorAll('.star');
+        const clickedValue = parseInt(star.dataset.value);
+        const hiddenInput = starsContainer.nextElementSibling;
+        // Обновляем оценку
+        starsContainer.dataset.score = clickedValue;
+        stars.forEach(s => {
+            const sValue = parseInt(s.dataset.value);
+            s.classList.toggle('filled', sValue <= clickedValue);
+            s.textContent = sValue <= clickedValue ? '★' : '☆';
+        });
+        if (hiddenInput && hiddenInput.type === 'hidden') {
+            hiddenInput.value = clickedValue;
+        }
+    } 
+  });
+
+  // Обработчики - раскрывающийся блок и поиск  
+  document.querySelectorAll('.toggle-button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const content = document.getElementById(btn.getAttribute('aria-controls'));
+      if (content) {
+        const isOpen = content.classList.toggle('open');
+        btn.setAttribute('aria-expanded', isOpen);
+        btn.querySelector('.arrow').textContent = isOpen ? '▲' : '▼';
+      }
+    });
+  });
+
+  document.querySelectorAll('.search-input').forEach(input => {
+    const container = document.getElementById(input.dataset.target);
+    if (container) {
+      input.addEventListener('input', () => {
+        const filter = input.value.toLowerCase();
+        container.querySelectorAll('label').forEach(label => {
+          const text = label.getAttribute('data-name');
+          label.style.display = text.includes(filter) ? '' : 'none';
+        });
+      });
+    }
+  });
+
+  // Инициализация блоков предпочтений
+  function initPreferenceBlock(blockId, checkboxesId, scoreInputName, itemType) {
+    const container = document.getElementById(checkboxesId);
+    const selectedList = document.getElementById(blockId + '_selected_list');
+
+    if (!container || !selectedList) return;
+
+    // Функция создания элемента списка
+    function createListItem(id, name, initialScore = 0) {
+      const li = document.createElement('li');
+      li.dataset.itemId = id;
+      li.dataset.itemType = itemType;
  
-      container.querySelectorAll('label').forEach(label => {
-        const text = label.getAttribute('data-author-name');
-        if (text.includes(filter)) {
-          label.style.display = '';
-        } else {
-          label.style.display = 'none';
+      li.appendChild(document.createTextNode(name + ' '));
+ 
+      const scoreSpan = document.createElement('span');
+      scoreSpan.className = 'score-stars editable';
+      scoreSpan.title = 'Нажмите, чтобы изменить оценку';
+      scoreSpan.dataset.score = initialScore;
+
+      for (let i = 1; i <= 10; i++) {
+        const star = document.createElement('span');
+        star.className = 'star';
+        star.dataset.value = i;
+        star.textContent = i <= initialScore ? '★' : '☆';
+        if (i <= initialScore) star.classList.add('filled');
+        scoreSpan.appendChild(star);
+      }
+      li.appendChild(scoreSpan);
+ 
+      const hiddenInput = document.createElement('input');
+      hiddenInput.type = 'hidden';
+      hiddenInput.name = `${scoreInputName}_${id}`;
+      hiddenInput.value = initialScore;
+      li.appendChild(hiddenInput);
+
+      return li;
+    }
+
+    // Обработчик изменения чекбоксов
+    container.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        const id = this.value;
+        const name = this.closest('label').textContent.trim();
+        const selectedList = document.getElementById(blockId + '_selected_list');
+
+        if (this.checked) { 
+          const li = createListItem(id, name, 0);
+          selectedList.appendChild(li);
+           
+          const noItemsMsg = selectedList.querySelector('li:not([data-item-id])');
+          if (noItemsMsg) noItemsMsg.remove();
+        } else { 
+          const itemToRemove = selectedList.querySelector(`li[data-item-id="${id}"]`);
+          if (itemToRemove) itemToRemove.remove(); 
+          if (selectedList.children.length === 0) {
+            const noItemsMsg = document.createElement('li');
+            noItemsMsg.textContent = `Нет выбранных ${blockId.replace('Block', '').toLowerCase()}`;
+            selectedList.appendChild(noItemsMsg);
+          }
         }
       });
     });
-  });
-  
- document.querySelectorAll('.toggle-button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const content = document.getElementById(btn.getAttribute('aria-controls'));
-    const isOpen = content.classList.toggle('open');
-    btn.setAttribute('aria-expanded', isOpen);
-    btn.querySelector('.arrow').textContent = isOpen ? '▲' : '▼';
-  });
-  btn.addEventListener('keydown', e => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      btn.click();
-    }
-  });
+  }
+
+  // Инициализация всех блоков
+  initPreferenceBlock('favoriteAuthorsBlock', 'favoriteAuthorsCheckboxes', 'favoriteauthors_score', 'favoriteauthors');
+  initPreferenceBlock('favoriteGenresBlock', 'favoriteGenresCheckboxes', 'favoritegenres_score', 'favoritegenres');
+  initPreferenceBlock('favoriteTagsBlock', 'favoriteTagsCheckboxes', 'favoritetags_score', 'favoritetags');
+  initPreferenceBlock('dislikedGenresBlock', 'dislikedGenresCheckboxes', 'dislikedgenres_score', 'dislikedgenres');
+  initPreferenceBlock('dislikedTagsBlock', 'dislikedTagsCheckboxes', 'dislikedtags_score', 'dislikedtags');
+ 
+document.querySelectorAll('.score-stars input[type="radio"]').forEach(radio => {
+    radio.addEventListener('change', function() { });
 });
 
-document.querySelectorAll('.search-input').forEach(input => {
-  const container = document.getElementById(input.dataset.target);
-  input.addEventListener('input', () => {
-    const filter = input.value.toLowerCase();
-    container.querySelectorAll('label').forEach(label => {
-      const text = label.getAttribute('data-name');
-      label.style.display = text.includes(filter) ? '' : 'none';
-    });
+
+function updateConflicts() {
+  // Получаем все выбранные элементы
+  const selectedFavGenres = new Set(
+    Array.from(document.querySelectorAll('#favoriteGenresCheckboxes input[type="checkbox"]:checked'))
+      .map(el => el.value)
+  );
+  const selectedDislikedGenres = new Set(
+    Array.from(document.querySelectorAll('#dislikedGenresCheckboxes input[type="checkbox"]:checked'))
+      .map(el => el.value)
+  );
+  
+  // Блокируем выбор в противоположных списках
+  document.querySelectorAll('#favoriteGenresCheckboxes input[type="checkbox"]').forEach(checkbox => {
+    if (selectedDislikedGenres.has(checkbox.value)) {
+      checkbox.disabled = true;
+      checkbox.closest('label').style.opacity = '0.5';
+    } else {
+      checkbox.disabled = false;
+      checkbox.closest('label').style.opacity = '1';
+    }
+  });
+  
+  document.querySelectorAll('#dislikedGenresCheckboxes input[type="checkbox"]').forEach(checkbox => {
+    if (selectedFavGenres.has(checkbox.value)) {
+      checkbox.disabled = true;
+      checkbox.closest('label').style.opacity = '0.5';
+    } else {
+      checkbox.disabled = false;
+      checkbox.closest('label').style.opacity = '1';
+    }
+  });
+  
+  // аналогично для тегов
+  const selectedFavTags = new Set(
+    Array.from(document.querySelectorAll('#favoriteTagsCheckboxes input[type="checkbox"]:checked'))
+      .map(el => el.value)
+  );
+  const selectedDislikedTags = new Set(
+    Array.from(document.querySelectorAll('#dislikedTagsCheckboxes input[type="checkbox"]:checked'))
+      .map(el => el.value)
+  );
+  
+  document.querySelectorAll('#favoriteTagsCheckboxes input[type="checkbox"]').forEach(checkbox => {
+    if (selectedDislikedTags.has(checkbox.value)) {
+      checkbox.disabled = true;
+      checkbox.closest('label').style.opacity = '0.5';
+    } else {
+      checkbox.disabled = false;
+      checkbox.closest('label').style.opacity = '1';
+    }
+  });
+  
+  document.querySelectorAll('#dislikedTagsCheckboxes input[type="checkbox"]').forEach(checkbox => {
+    if (selectedFavTags.has(checkbox.value)) {
+      checkbox.disabled = true;
+      checkbox.closest('label').style.opacity = '0.5';
+    } else {
+      checkbox.disabled = false;
+      checkbox.closest('label').style.opacity = '1';
+    }
+  });
+}
+
+// Вызываем при загрузке и при любом изменении чекбоксов
+document.addEventListener('DOMContentLoaded', () => {
+  updateConflicts();
+  document.querySelectorAll('.checkbox-multi-col input[type="checkbox"]').forEach(checkbox => {
+    checkbox.addEventListener('change', updateConflicts);
   });
 });
 </script>
 
-{% endif %}
 
 
+ 
 <style>
 .score-stars {
   display: inline-flex;
   gap: 2px;
   vertical-align: middle;
+  cursor: pointer;
+  user-select: none;
 }
 .score-stars .star {
   font-size: 1rem;
   color: gray;
+  transition: color 0.2s;
 }
-.score-stars .star.filled-green {
-  color: #28a745;  
-}
-.score-stars .star.filled-red {
-  color: #dc3545;  
+.score-stars .star.filled {
+  color: #28a745;
 }
 
+    .collapsible-content {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.3s ease;
+    }
+    .collapsible-content.open {
+      max-height: 1000px;
+    }
+    .toggle-button {
+      cursor: pointer;
+      user-select: none;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .toggle-button .arrow {
+      margin-left: 0.5rem;
+    }
 
-  .collapsible-content {
-    overflow: hidden;
-    max-height: 0;
-    transition: max-height 0.3s ease;
-  }
-  .collapsible-content.open {
-    max-height: 1000px;  
-  }
-  .toggle-button {
-    cursor: pointer;
-    user-select: none;
-  }
-    
-.checked-option {
-  font-weight: 600;
-  background-color: #d0f0d0;
-  border-radius: 3px;
-  padding: 2px 5px;
+    .checkbox-multi-col {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 4px;
+      background: #fafafa;
+    }
+    .checkbox-multi-col label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      font-size: 0.9rem;
+      padding: 2px 5px;
+      border-radius: 3px;
+      transition: background-color 0.2s ease;
+    }
+    .checkbox-multi-col label:hover {
+      background-color: #f0f0f0;
+    }
+    .checkbox-multi-col input[type="checkbox"] {
+      margin-right: 6px;
+      cursor: pointer;
+    }
+
+
+.score-stars input[type="radio"]:checked ~ .star,
+.score-stars input[type="radio"]:checked ~ .star ~ .star {
+    color: gold;
+}    
+/* Добавим в style section */
+.checkbox-multi-col label[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
-
-
-
-.checkbox-multi-col {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr); /* 4 колонки */
-  gap: 10px;
-  max-height: 300px;  
-  overflow-y: auto;
-  border: 1px solid #ddd;
-  padding: 10px;
-  border-radius: 4px;
-  background: #fafafa;
-}
-
-.checkbox-multi-col label {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  user-select: none;
-  font-size: 0.9rem;
-  padding: 2px 5px;
-  border-radius: 3px;
-  transition: background-color 0.2s ease;
-}
-
-.checkbox-multi-col label:hover {
-  background-color: #f0f0f0;
-}
-
-.checkbox-multi-col input[type="checkbox"] {
-  margin-right: 6px;
-  cursor: pointer;
+.checkbox-multi-col input[type="checkbox"]:disabled {
+  cursor: not-allowed;
 }
 </style>
 
+{% endif %} 
 
 {% endblock %}

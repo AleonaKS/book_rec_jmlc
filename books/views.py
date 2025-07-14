@@ -136,77 +136,36 @@ def book_detail(request, book_id):
 
 
 
+
 @login_required
-def profile(request): 
+def profile(request):
+    user = request.user
+    preferences, created = UserPreferences.objects.get_or_create(user=user)
     user_ratings_subquery = BookRating.objects.filter(
         user=request.user,
         book=OuterRef('pk')
     ).values('rating')[:1]
-
     books = Book.objects.annotate(
         user_rating=Subquery(user_ratings_subquery)
     ).filter(user_rating__isnull=False)
- 
-    user = request.user
-    preferences, created = UserPreferences.objects.get_or_create(user=user)
-
     if request.method == 'POST':
         form = UserPreferencesForm(request.POST, instance=preferences, user=user)
         if form.is_valid():
-            with transaction.atomic():
-                # Обновляем UserPreferences (т.к. поля ManyToMany через промежуточные модели, надо обновлять вручную)
-                FavoriteAuthors.objects.filter(userprofile=preferences).delete()
-                FavoriteGenres.objects.filter(userprofile=preferences).delete()
-                FavoriteTags.objects.filter(userprofile=preferences).delete()
-                DislikedGenres.objects.filter(userprofile=preferences).delete()
-                DislikedTags.objects.filter(userprofile=preferences).delete()
-
-                for author in form.cleaned_data['favorite_authors']:
-                    FavoriteAuthors.objects.create(userprofile=preferences, author=author)
-
-                for genre in form.cleaned_data['favorite_genres']:
-                    fg = FavoriteGenres(userprofile=preferences, genre=genre)
-                    try:
-                        fg.clean()
-                        fg.save()
-                    except Exception as e:
-                        messages.error(request, f'Ошибка при добавлении любимого жанра {genre}: {e}')
-
-                for tag in form.cleaned_data['favorite_tags']:
-                    ft = FavoriteTags(userprofile=preferences, tag=tag)
-                    try:
-                        ft.clean()
-                        ft.save()
-                    except Exception as e:
-                        messages.error(request, f'Ошибка при добавлении любимого тега {tag}: {e}')
-
-                for genre in form.cleaned_data['disliked_genres']:
-                    dg = DislikedGenres(userprofile=preferences, genre=genre)
-                    try:
-                        dg.clean()
-                        dg.save()
-                    except Exception as e:
-                        messages.error(request, f'Ошибка при добавлении нелюбимого жанра {genre}: {e}')
-
-                for tag in form.cleaned_data['disliked_tags']:
-                    dt = DislikedTags(userprofile=preferences, tag=tag)
-                    try:
-                        dt.clean()
-                        dt.save()
-                    except Exception as e:
-                        messages.error(request, f'Ошибка при добавлении нелюбимого тега {tag}: {e}')
-
+            form.save()
             messages.success(request, 'Настройки сохранены')
             return redirect('profile')
     else:
         form = UserPreferencesForm(instance=preferences, user=user)
-
-
     context = {
         'books': books,
         'form': form, 
+        'userpreferences': preferences,
     }
     return render(request, 'profile.html', context)
+ 
+ 
+
+
 
 
 

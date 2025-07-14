@@ -5,12 +5,17 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from haystack.query import SearchQuerySet
+from django.db import transaction
 from django.db.models import F 
 from django.shortcuts import get_object_or_404 
 from django.utils import timezone  
-from books.models import Book, BookRating, BookView, UserBookStatus, UserSearchQuery
+from books.models import Book, BookRating, BookView, UserBookStatus, UserSearchQuery # Author, Genre, Tag,
+from books.models import UserPreferences, FavoriteAuthors, FavoriteGenres, FavoriteTags, DislikedGenres, DislikedTags
 from .recommendations.collaborative import get_recommendations_for_user_user_based   
 from .serializers import BookSerializer, UserSearchQuerySerializer
+from .forms import UserPreferencesForm 
+ 
+from django.core.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
 # from django.views.decorators.csrf import csrf_exempt
@@ -61,12 +66,9 @@ def book_rate(request, book_id):
         rating_value = int(request.data.get('rating', 0))
     except (TypeError, ValueError):
         return Response({'error': 'Некорректный рейтинг'}, status=status.HTTP_400_BAD_REQUEST)
-
     if rating_value < 1 or rating_value > 5:
         return Response({'error': 'Рейтинг должен быть от 1 до 5'}, status=status.HTTP_400_BAD_REQUEST)
-
     book = get_object_or_404(Book, id=book_id)
-
     rating_obj, created = BookRating.objects.update_or_create(
         user=request.user,
         book=book,
@@ -83,21 +85,17 @@ def record_book_view(request):
     book_id = data.get('book_id')
     print('book_id:', book_id)   
     scroll = data.get('scroll_depth')
-
     if not book_id:
         return Response({'status': 'error', 'message': 'book_id is required'}, status=400)
     try:
         book = Book.objects.get(id=book_id)
     except Book.DoesNotExist:
         return Response({'status': 'error', 'message': 'Book not found'}, status=404)
-
     user = request.user if request.user.is_authenticated else None
-
     if user is None:
         if not request.session.session_key:
             request.session.create()
         session_key = request.session.session_key 
-
         book_view_qs = BookView.objects.filter(user__isnull=True, session_key=session_key, book=book)
         if book_view_qs.exists():
             book_view = book_view_qs.first()
@@ -118,7 +116,6 @@ def record_book_view(request):
                 scroll_depth=data.get('scroll_depth')
             )
             print(f"Создан BookView для сессии {session_key} и книги {book_id}")
-
         user_views = BookView.objects.filter(user__isnull=True, session_key=session_key).order_by('-viewed_at')
     else:
         book_view, created = BookView.objects.get_or_create(
@@ -140,9 +137,7 @@ def record_book_view(request):
             print(f"Обновлен BookView для пользователя {user.id} и книги {book_id}")
         else:
             print(f"Создан BookView для пользователя {user.id} и книги {book_id}")
-
         user_views = BookView.objects.filter(user=user).order_by('-viewed_at')
-
     # Ограничиваем до 50 записей
     if user_views.count() > 50:
         to_delete = user_views[50:]
@@ -152,7 +147,6 @@ def record_book_view(request):
     old_views = user_views.exclude(book_id__in=last_20_books_ids)
     short_duration_views = old_views.filter(duration_seconds__lt=30)
     short_duration_views.delete()
-
     return Response({'status': 'ok'})
 
 
@@ -194,7 +188,7 @@ def add_to_bookmarks(request):
 
 
 
-
+# Удаление книги их корзины и закладок
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def remove_from_cart(request):
@@ -292,3 +286,5 @@ def get_user_search_history(request):
         to_delete.delete()
     serializer = UserSearchQuerySerializer(user_queries[:10], many=True)
     return Response(serializer.data)
+
+

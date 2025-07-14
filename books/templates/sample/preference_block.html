@@ -1,0 +1,55 @@
+{# sample/preference_block.html #}
+<div class="preference-block">
+  <div class="toggle-button" role="button" tabindex="0" aria-expanded="false" aria-controls="{{ block_id }}">
+    {{ title }} <span class="arrow">▼</span>
+  </div>
+  <div id="{{ block_id }}" class="collapsible-content">
+    <input type="text" class="form-control mb-2 search-input" placeholder="Поиск {{ search_placeholder }}..." data-target="{{ checkboxes_id }}" autocomplete="off" aria-label="Поиск {{ search_placeholder }}" />
+    <div id="{{ checkboxes_id }}" class="checkbox-multi-col">
+      {% with checked=form_field.value %}
+        {% for checkbox in form_field %}
+          <label class="form-check-label d-block" data-name="{{ checkbox.choice_label|lower }}">
+            {{ checkbox.tag }} {{ checkbox.choice_label }}
+          </label>
+        {% endfor %}
+      {% endwith %}
+    </div>
+  </div>
+
+  <details class="mt-2">
+  <summary>Ваши {{ title|lower }} и их score</summary>
+  <ul id="{{ block_id }}_selected_list">
+    {% if favorites %}
+      {% for fav in favorites %}
+        <li data-item-id="{{ fav.id }}" data-item-type="{{ item_type }}">
+          {% if item_type in 'favoriteauthors dislikedauthors' %}
+              {{ fav.author.name }}
+          {% elif item_type in 'favoritegenres dislikedgenres' %}
+              {{ fav.genre.name }}
+          {% elif item_type in 'favoritetags dislikedtags' %}
+              {{ fav.tag.name }}
+          {% else %}
+              {{ fav }}
+          {% endif %}
+
+          
+          <span class="score-stars editable" data-score="{{ fav.score|floatformat:0 }}" title="Нажмите, чтобы изменить оценку">
+            {% for i in "12345678910"|slice:":10" %}
+                {% if forloop.counter <= fav.score|floatformat:0 %}
+                <span class="star filled" data-value="{{ forloop.counter }}">★</span>
+                {% else %}
+                <span class="star" data-value="{{ forloop.counter }}">☆</span>
+                {% endif %}
+            {% endfor %}
+            </span>
+            <input type="hidden" name="{{ score_input_name }}_{{ fav.id }}" value="{{ fav.score|floatformat:0 }}">
+        </li>
+      {% endfor %}
+    {% else %}
+      <li>Нет выбранных {{ title|lower }}</li>
+    {% endif %}
+  </ul>
+</details>
+</div>
+<hr>
+

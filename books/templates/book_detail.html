@@ -138,7 +138,7 @@
     <div class="similar-books-section">
         <h2>Похожие книги</h2>
         {% if similar_books %}
-        {% include 'book_list.html' with books=similar_books %}
+        {% include 'sample/book_list.html' with books=similar_books %}
         {% else %}
             <p>Похожие книги не найдены.</p>
         {% endif %}
