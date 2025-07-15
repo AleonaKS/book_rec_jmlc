@@ -108,16 +108,39 @@ class UserBookStatus(models.Model):
         return f"{self.user.username} - {self.book.title} - {self.status}"
 
 
+
 class UserSubscription(models.Model):
     SUBSCRIPTION_TYPES = [
         ('AUTHOR', 'Автор'),
         ('CYCLE', 'Цикл'),   
     ]
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    content_type = models.CharField(max_length=10, choices=SUBSCRIPTION_TYPES) 
-    author = models.ForeignKey(Author, null=True, blank=True, on_delete=models.CASCADE)
-    cycle = models.ForeignKey(Cycle, null=True, blank=True, on_delete=models.CASCADE)
+    content_type = models.CharField(max_length=10, choices=SUBSCRIPTION_TYPES)
+    author = models.ForeignKey('Author', null=True, blank=True, on_delete=models.CASCADE)
+    cycle = models.ForeignKey('Cycle', null=True, blank=True, on_delete=models.CASCADE)
     subscribed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = (
+            ('user', 'author'),
+            ('user', 'cycle'),
+        )
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.content_type == 'AUTHOR' and not self.author:
+            raise ValidationError('Для типа AUTHOR необходимо указать автора')
+        if self.content_type == 'CYCLE' and not self.cycle:
+            raise ValidationError('Для типа CYCLE необходимо указать цикл')
+        if self.content_type == 'AUTHOR' and self.cycle:
+            raise ValidationError('Для типа AUTHOR поле cycle должно быть пустым')
+        if self.content_type == 'CYCLE' and self.author:
+            raise ValidationError('Для типа CYCLE поле author должно быть пустым')
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
 
 
 class BookView(models.Model):

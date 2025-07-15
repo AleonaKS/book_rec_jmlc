@@ -1,7 +1,5 @@
 $(function() {
-
- // --- Модальное окно и формы ---
-
+ // Модальное окно 
 var modal = $('#loginModal'); 
 $('#loginBtn').on('click', function() {
 modal.show();

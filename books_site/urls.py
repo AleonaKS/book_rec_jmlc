@@ -22,18 +22,18 @@ from books.api_views import (
  autocomplete_books, book_rate, record_book_view, 
  add_to_bookmarks, add_to_cart, 
  record_user_search, get_user_search_history,
- add_to_cart, remove_from_cart, add_to_bookmarks, remove_from_bookmarks
- 
+ add_to_cart, remove_from_cart, add_to_bookmarks, remove_from_bookmarks,
+ subscribe_author, unsubscribe_author, subscribe_cycle, unsubscribe_cycle
 ) 
    
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.home_view, name='home'),  
-    path('signup/', views.signup, name='signup'),  
     path('registration/', views.registration, name='registration'),  
-    path('login/', auth_views.LoginView.as_view(), name='login'),
+    path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    
     path('autocomplete/', autocomplete_books, name='autocomplete_books'),
     path('profile/', views.profile, name='profile'), 
     path('api/record-book-view/', record_book_view, name='record-book-view'),
@@ -52,11 +52,14 @@ urlpatterns = [
     path('api/bookmarks/remove/', remove_from_bookmarks, name='remove_from_bookmarks'),
 
     path('books/user/<int:user_id>/', views.books_by_user, name='books_by_user'),
-    path('books/', views.books_by_category, name='books_by_category'),  # без category_slug
+    path('books/', views.books_by_category, name='books_by_category'), 
     path('books/<category_slug>/', views.books_by_category, name='books_by_category'),
-
-
     path('catalog/', views.catalog, name='catalog'), 
+
+    path('subscribe/author/<int:author_id>/', subscribe_author, name='subscribe_author'),
+    path('unsubscribe/author/<int:author_id>/', unsubscribe_author, name='unsubscribe_author'),
+    path('subscribe/cycle/<int:cycle_id>/', subscribe_cycle, name='subscribe_cycle'),
+    path('unsubscribe/cycle/<int:cycle_id>/', unsubscribe_cycle, name='unsubscribe_cycle'),
 ]
 
  

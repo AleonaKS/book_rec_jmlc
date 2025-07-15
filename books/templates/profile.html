@@ -1,366 +1,243 @@
-{% extends 'base.html' %} 
- 
-{% block content %} 
-    {% if user.is_authenticated %}
-        <p>Личный кабинет, {{ user.username }}!</p>
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% load static %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
 
-<h2>Ваши оценки 
-{% include 'sample/book_list.html' with books=books show_actions=False %}
+{% block content %}
+{% if user.is_authenticated %}
+<div class="container my-4">
+
+  <h1 class="mb-3">Личный кабинет, {{ user.username }}!</h1>
+
+<div class="subscriptions-container d-flex gap-4 mb-4">
+  <div class="subscriptions-block flex-fill">
+    <h3>Подписки на авторов</h3>
+    {% if author_subscriptions %}
+      <ul class="subscriptions-list">
+        {% for author in author_subscriptions %}
+          <li>{{ author.name }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Вы не подписаны ни на одного автора.</p>
+    {% endif %}
+  </div>
+
+  <div class="subscriptions-block flex-fill">
+    <h3>Подписки на циклы</h3>
+    {% if cycle_subscriptions %}
+      <ul class="subscriptions-list">
+        {% for cycle in cycle_subscriptions %}
+          <li>{{ cycle.name }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Вы не подписаны ни на один цикл.</p>
+    {% endif %}
+  </div>
+</div>
 
 
-
-        <form action="{% url 'logout' %}" method="post">
-            {% csrf_token %}
-            <button type="submit">Выйти</button>
-        </form>
-
-
-
-
-<div class="container mt-4">
-    <h2>Личный кабинет — настройки предпочтений</h2> 
+  <section class="preferences-section p-4 border rounded shadow-sm bg-light mb-5">
+    <h2 class="mb-4">Настройки предпочтений</h2>
 
     {% if messages %}
       {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
       {% endfor %}
     {% endif %}
 
     <form method="post" novalidate>
       {% csrf_token %}
 
-  {# Любимые авторы #}
-{% include 'sample/preference_block.html' with title="Любимые авторы" search_placeholder="авторов" block_id="favoriteAuthorsBlock" checkboxes_id="favoriteAuthorsCheckboxes" form_field=form.favorite_authors favorites=userpreferences.favoriteauthors_set.all item_type="favoriteauthors" score_input_name="favoriteauthors_score" %}
+      {% include 'sample/preference_block.html' with title="Любимые авторы" search_placeholder="авторов" block_id="favoriteAuthorsBlock" checkboxes_id="favoriteAuthorsCheckboxes" form_field=form.favorite_authors favorites=userpreferences.favoriteauthors_set.all item_type="favoriteauthors" score_input_name="favoriteauthors_score" %}
 
-    {# Любимые жанры #}
-{% include 'sample/preference_block.html' with title="Любимые жанры" search_placeholder="жанров" block_id="favoriteGenresBlock" checkboxes_id="favoriteGenresCheckboxes" form_field=form.favorite_genres favorites=userpreferences.favoritegenres_set.all item_type="favoritegenres" score_input_name="favoritegenres_score" %}
+      {% include 'sample/preference_block.html' with title="Любимые жанры" search_placeholder="жанров" block_id="favoriteGenresBlock" checkboxes_id="favoriteGenresCheckboxes" form_field=form.favorite_genres favorites=userpreferences.favoritegenres_set.all item_type="favoritegenres" score_input_name="favoritegenres_score" %}
 
-    {# Любимые теги #}
-{% include 'sample/preference_block.html' with title="Любимые теги" search_placeholder="тегов" block_id="favoriteTagsBlock" checkboxes_id="favoriteTagsCheckboxes" form_field=form.favorite_tags favorites=userpreferences.favoritetags_set.all item_type="favoritetags" score_input_name="favoritetags_score" %}
+      {% include 'sample/preference_block.html' with title="Любимые теги" search_placeholder="тегов" block_id="favoriteTagsBlock" checkboxes_id="favoriteTagsCheckboxes" form_field=form.favorite_tags favorites=userpreferences.favoritetags_set.all item_type="favoritetags" score_input_name="favoritetags_score" %}
 
-    {# Нелюбимые жанры #}
-{% include 'sample/preference_block.html' with title="Нелюбимые жанры" search_placeholder="жанров" block_id="dislikedGenresBlock" checkboxes_id="dislikedGenresCheckboxes" form_field=form.disliked_genres favorites=userpreferences.dislikedgenres_set.all item_type="dislikedgenres" score_input_name="dislikedgenres_score" %}
+      {% include 'sample/preference_block.html' with title="Нелюбимые жанры" search_placeholder="жанров" block_id="dislikedGenresBlock" checkboxes_id="dislikedGenresCheckboxes" form_field=form.disliked_genres favorites=userpreferences.dislikedgenres_set.all item_type="dislikedgenres" score_input_name="dislikedgenres_score" %}
 
-    {# Нелюбимые теги #}
-{% include 'sample/preference_block.html' with title="Нелюбимые теги" search_placeholder="тегов" block_id="dislikedTagsBlock" checkboxes_id="dislikedTagsCheckboxes" form_field=form.disliked_tags favorites=userpreferences.dislikedtags_set.all item_type="dislikedtags" score_input_name="dislikedtags_score" %}
+      {% include 'sample/preference_block.html' with title="Нелюбимые теги" search_placeholder="тегов" block_id="dislikedTagsBlock" checkboxes_id="dislikedTagsCheckboxes" form_field=form.disliked_tags favorites=userpreferences.dislikedtags_set.all item_type="dislikedtags" score_input_name="dislikedtags_score" %}
 
+      <button type="submit" class="btn btn-primary mt-4">Сохранить</button>
 
-      <button type="submit" class="btn btn-primary mt-3">Сохранить</button>
+      {% if form.errors %}
+      <div class="alert alert-danger mt-3">
+          <strong>Ошибки:</strong>
+          <ul class="mb-0">
+          {% for field, errors in form.errors.items %}
+              {% for error in errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+          {% endfor %}
+          </ul>
+      </div>
+      {% endif %}
     </form>
+  </section>
+</div>
 
-    {% if form.errors %}
-    <div class="alert alert-danger">
-        <strong>Ошибки:</strong>
-        <ul>
-        {% for field, errors in form.errors.items %}
-            {% for error in errors %}
-            <li>{{ error }}</li>
-            {% endfor %}
-        {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
-  </div>
+  <section class="mb-5">
+    <h2>Ваши оценки</h2>
+    {% include 'sample/book_list.html' with books=books show_actions=False %}
+  </section>
+
+  <form action="{% url 'logout' %}" method="post" class="mb-5 text-center logout-form">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-logout">Выйти</button>
+  </form>
 
 
-
-  
-<script>
-function initializeStars() {
-  document.querySelectorAll('.score-stars.editable').forEach(starsContainer => {
-    const stars = starsContainer.querySelectorAll('.star');
-    const score = parseInt(starsContainer.dataset.score) || 0;
-    const hiddenInput = starsContainer.nextElementSibling;
-    // Устанавливаем начальное состояние звезд
-    stars.forEach(star => {
-      const starValue = parseInt(star.dataset.value);
-      star.classList.toggle('filled', starValue <= score);
-      star.textContent = starValue <= score ? '★' : '☆';
-    });
-    if (hiddenInput && hiddenInput.type === 'hidden') {
-      hiddenInput.value = score;
-    }
-  });
+<style> 
+button.btn-primary {
+  font-size: 1.1rem;
+  padding: 0.6rem 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 8px rgba(0,123,255,0.3);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
-  // Инициализация при загрузке
-  initializeStars();
+button.btn-primary:hover {
+  background-color: #0056b3;
+  box-shadow: 0 6px 12px rgba(0,86,179,0.5);
+}
 
-  // Обработчики для  звездочек
-  document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('star')) {
-        const star = e.target;
-        const starsContainer = star.closest('.score-stars');
-        const stars = starsContainer.querySelectorAll('.star');
-        const clickedValue = parseInt(star.dataset.value);
-        const hiddenInput = starsContainer.nextElementSibling;
-        // Обновляем оценку
-        starsContainer.dataset.score = clickedValue;
-        stars.forEach(s => {
-            const sValue = parseInt(s.dataset.value);
-            s.classList.toggle('filled', sValue <= clickedValue);
-            s.textContent = sValue <= clickedValue ? '★' : '☆';
-        });
-        if (hiddenInput && hiddenInput.type === 'hidden') {
-            hiddenInput.value = clickedValue;
-        }
-    } 
-  });
+.logout-form {
+  margin-top: 2rem;
+  text-align: center;  
+} 
 
-  // Обработчики - раскрывающийся блок и поиск  
-  document.querySelectorAll('.toggle-button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const content = document.getElementById(btn.getAttribute('aria-controls'));
-      if (content) {
-        const isOpen = content.classList.toggle('open');
-        btn.setAttribute('aria-expanded', isOpen);
-        btn.querySelector('.arrow').textContent = isOpen ? '▲' : '▼';
-      }
-    });
-  });
+button.btn-logout { 
+  font-size: 1.1rem;
+  padding: 0.6rem 2rem;
+  border-radius: 0.6rem;
+  background: linear-gradient(45deg, #dc3545, #a71d2a);
+  border: none;
+  color: white;
+  box-shadow: 0 4px 8px rgba(220,53,69,0.4);
+  cursor: pointer;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+  display: inline-block;  
+}
+button.btn-logout:hover {
+  background: linear-gradient(45deg, #a71d2a, #dc3545);
+  box-shadow: 0 6px 14px rgba(167,29,42,0.6); 
+}
 
-  document.querySelectorAll('.search-input').forEach(input => {
-    const container = document.getElementById(input.dataset.target);
-    if (container) {
-      input.addEventListener('input', () => {
-        const filter = input.value.toLowerCase();
-        container.querySelectorAll('label').forEach(label => {
-          const text = label.getAttribute('data-name');
-          label.style.display = text.includes(filter) ? '' : 'none';
-        });
-      });
-    }
-  });
 
-  // Инициализация блоков предпочтений
-  function initPreferenceBlock(blockId, checkboxesId, scoreInputName, itemType) {
-    const container = document.getElementById(checkboxesId);
-    const selectedList = document.getElementById(blockId + '_selected_list');
+.subscriptions-container {
+  display: flex;
+  gap: 2rem;
+  padding: 0 2rem; 
+  margin-bottom: 1.5rem; 
+}
+.subscriptions-block {
+  flex: 1; 
+}
 
-    if (!container || !selectedList) return;
-
-    // Функция создания элемента списка
-    function createListItem(id, name, initialScore = 0) {
-      const li = document.createElement('li');
-      li.dataset.itemId = id;
-      li.dataset.itemType = itemType;
- 
-      li.appendChild(document.createTextNode(name + ' '));
- 
-      const scoreSpan = document.createElement('span');
-      scoreSpan.className = 'score-stars editable';
-      scoreSpan.title = 'Нажмите, чтобы изменить оценку';
-      scoreSpan.dataset.score = initialScore;
-
-      for (let i = 1; i <= 10; i++) {
-        const star = document.createElement('span');
-        star.className = 'star';
-        star.dataset.value = i;
-        star.textContent = i <= initialScore ? '★' : '☆';
-        if (i <= initialScore) star.classList.add('filled');
-        scoreSpan.appendChild(star);
-      }
-      li.appendChild(scoreSpan);
- 
-      const hiddenInput = document.createElement('input');
-      hiddenInput.type = 'hidden';
-      hiddenInput.name = `${scoreInputName}_${id}`;
-      hiddenInput.value = initialScore;
-      li.appendChild(hiddenInput);
-
-      return li;
-    }
-
-    // Обработчик изменения чекбоксов
-    container.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        const id = this.value;
-        const name = this.closest('label').textContent.trim();
-        const selectedList = document.getElementById(blockId + '_selected_list');
-
-        if (this.checked) { 
-          const li = createListItem(id, name, 0);
-          selectedList.appendChild(li);
-           
-          const noItemsMsg = selectedList.querySelector('li:not([data-item-id])');
-          if (noItemsMsg) noItemsMsg.remove();
-        } else { 
-          const itemToRemove = selectedList.querySelector(`li[data-item-id="${id}"]`);
-          if (itemToRemove) itemToRemove.remove(); 
-          if (selectedList.children.length === 0) {
-            const noItemsMsg = document.createElement('li');
-            noItemsMsg.textContent = `Нет выбранных ${blockId.replace('Block', '').toLowerCase()}`;
-            selectedList.appendChild(noItemsMsg);
-          }
-        }
-      });
-    });
+  .subscriptions-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem 2rem;
+    list-style: none;
+    padding-left: 0;
+  }
+  .subscriptions-list li {
+    border-bottom: 1px solid #eee;
+    padding: 4px 0;
   }
 
-  // Инициализация всех блоков
-  initPreferenceBlock('favoriteAuthorsBlock', 'favoriteAuthorsCheckboxes', 'favoriteauthors_score', 'favoriteauthors');
-  initPreferenceBlock('favoriteGenresBlock', 'favoriteGenresCheckboxes', 'favoritegenres_score', 'favoritegenres');
-  initPreferenceBlock('favoriteTagsBlock', 'favoriteTagsCheckboxes', 'favoritetags_score', 'favoritetags');
-  initPreferenceBlock('dislikedGenresBlock', 'dislikedGenresCheckboxes', 'dislikedgenres_score', 'dislikedgenres');
-  initPreferenceBlock('dislikedTagsBlock', 'dislikedTagsCheckboxes', 'dislikedtags_score', 'dislikedtags');
+  .preferences-section {
+    padding: 0 2rem; 
+    font-size: 1.1rem;
+  }
+  .preferences-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .preferences-section label {
+    font-size: 1rem;
+  }
  
-document.querySelectorAll('.score-stars input[type="radio"]').forEach(radio => {
-    radio.addEventListener('change', function() { });
-});
 
-
-function updateConflicts() {
-  // Получаем все выбранные элементы
-  const selectedFavGenres = new Set(
-    Array.from(document.querySelectorAll('#favoriteGenresCheckboxes input[type="checkbox"]:checked'))
-      .map(el => el.value)
-  );
-  const selectedDislikedGenres = new Set(
-    Array.from(document.querySelectorAll('#dislikedGenresCheckboxes input[type="checkbox"]:checked'))
-      .map(el => el.value)
-  );
-  
-  // Блокируем выбор в противоположных списках
-  document.querySelectorAll('#favoriteGenresCheckboxes input[type="checkbox"]').forEach(checkbox => {
-    if (selectedDislikedGenres.has(checkbox.value)) {
-      checkbox.disabled = true;
-      checkbox.closest('label').style.opacity = '0.5';
-    } else {
-      checkbox.disabled = false;
-      checkbox.closest('label').style.opacity = '1';
-    }
-  });
-  
-  document.querySelectorAll('#dislikedGenresCheckboxes input[type="checkbox"]').forEach(checkbox => {
-    if (selectedFavGenres.has(checkbox.value)) {
-      checkbox.disabled = true;
-      checkbox.closest('label').style.opacity = '0.5';
-    } else {
-      checkbox.disabled = false;
-      checkbox.closest('label').style.opacity = '1';
-    }
-  });
-  
-  // аналогично для тегов
-  const selectedFavTags = new Set(
-    Array.from(document.querySelectorAll('#favoriteTagsCheckboxes input[type="checkbox"]:checked'))
-      .map(el => el.value)
-  );
-  const selectedDislikedTags = new Set(
-    Array.from(document.querySelectorAll('#dislikedTagsCheckboxes input[type="checkbox"]:checked'))
-      .map(el => el.value)
-  );
-  
-  document.querySelectorAll('#favoriteTagsCheckboxes input[type="checkbox"]').forEach(checkbox => {
-    if (selectedDislikedTags.has(checkbox.value)) {
-      checkbox.disabled = true;
-      checkbox.closest('label').style.opacity = '0.5';
-    } else {
-      checkbox.disabled = false;
-      checkbox.closest('label').style.opacity = '1';
-    }
-  });
-  
-  document.querySelectorAll('#dislikedTagsCheckboxes input[type="checkbox"]').forEach(checkbox => {
-    if (selectedFavTags.has(checkbox.value)) {
-      checkbox.disabled = true;
-      checkbox.closest('label').style.opacity = '0.5';
-    } else {
-      checkbox.disabled = false;
-      checkbox.closest('label').style.opacity = '1';
-    }
-  });
-}
-
-// Вызываем при загрузке и при любом изменении чекбоксов
-document.addEventListener('DOMContentLoaded', () => {
-  updateConflicts();
-  document.querySelectorAll('.checkbox-multi-col input[type="checkbox"]').forEach(checkbox => {
-    checkbox.addEventListener('change', updateConflicts);
-  });
-});
-</script>
-
-
-
+  .score-stars {
+    font-size: 1.2rem;
+  }
+  .score-stars .star {
+    color: gray;
+    transition: color 0.2s ease;
+  }
+  .score-stars .star.filled {
+    color: #28a745;
+  }
  
-<style>
-.score-stars {
-  display: inline-flex;
-  gap: 2px;
-  vertical-align: middle;
-  cursor: pointer;
-  user-select: none;
-}
-.score-stars .star {
-  font-size: 1rem;
-  color: gray;
-  transition: color 0.2s;
-}
-.score-stars .star.filled {
-  color: #28a745;
-}
-
-    .collapsible-content {
-      overflow: hidden;
-      max-height: 0;
-      transition: max-height 0.3s ease;
-    }
-    .collapsible-content.open {
-      max-height: 1000px;
-    }
-    .toggle-button {
-      cursor: pointer;
-      user-select: none;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-    .toggle-button .arrow {
-      margin-left: 0.5rem;
-    }
-
-    .checkbox-multi-col {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      max-height: 300px;
-      overflow-y: auto;
-      border: 1px solid #ddd;
-      padding: 10px;
-      border-radius: 4px;
-      background: #fafafa;
-    }
-    .checkbox-multi-col label {
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      user-select: none;
-      font-size: 0.9rem;
-      padding: 2px 5px;
-      border-radius: 3px;
-      transition: background-color 0.2s ease;
-    }
-    .checkbox-multi-col label:hover {
-      background-color: #f0f0f0;
-    }
-    .checkbox-multi-col input[type="checkbox"] {
-      margin-right: 6px;
-      cursor: pointer;
-    }
-
-
-.score-stars input[type="radio"]:checked ~ .star,
-.score-stars input[type="radio"]:checked ~ .star ~ .star {
-    color: gold;
-}     
-.checkbox-multi-col label[disabled] {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.checkbox-multi-col input[type="checkbox"]:disabled {
-  cursor: not-allowed;
-}
+  .collapsible-content {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.3s ease;
+  }
+  .collapsible-content.open {
+    max-height: 1000px;
+  }
+  .toggle-button {
+    cursor: pointer;
+    user-select: none;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .toggle-button .arrow {
+    margin-left: 0.5rem;
+  }
+ 
+  .checkbox-multi-col {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 4px;
+    background: #fff;
+  }
+  .checkbox-multi-col label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    font-size: 0.9rem;
+    padding: 4px 6px;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+  }
+  .checkbox-multi-col label:hover {
+    background-color: #f0f0f0;
+  }
+  .checkbox-multi-col input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+  }
+  .checkbox-multi-col label[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .checkbox-multi-col input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+  } 
 </style>
 
-{% endif %} 
+{% else %}
+<div class="container my-4">
+  <p>Пожалуйста, <a href="{% url 'login' %}?next={{ request.path }}">войдите</a>, чтобы получить доступ к личному кабинету.</p>
+</div>
+{% endif %}
 
 {% endblock %}
+{% block scripts %}
+<script src="{% static '/profile.js' %}"></script>
+{% endblock %}
+
+ 

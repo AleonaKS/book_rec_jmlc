@@ -147,35 +147,57 @@
 
 
 <style>
-    .similar-books-section {
+.book-title {
+    font-size: 2rem; /* увеличиваем размер названия */
+    margin-top: 20px;  /* добавляем отступ сверху */
+}
+.book-detail .description {
+  white-space: pre-wrap;
+  margin-top: 15px;
+  line-height: 1.5;
+}
+.book-detail .rating {
+  margin-top: 10px;
+  font-weight: 600;
+  color: #116466;
+}
+.book-detail .actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+
+.similar-books-section {
         margin-top: 40px;
-    }
-    .book-grid {
+}
+.book-grid {
         display: flex;
         flex-wrap: wrap;
         gap: 20px;
         justify-content: flex-start;
-    }
-    .book-card {
+}
+.book-card {
         width: 180px;
         border: 1px solid #ddd;
         padding: 10px;
         box-sizing: border-box;
         text-align: center;
-    }
-    .book-card img {
+}
+.book-card img {
         max-width: 100%;
         height: auto;
-    }
-    .book-card .title {
+}
+.book-card .title {
         font-weight: bold;
         margin: 10px 0 5px;
-    }
-    .book-card .author {
+}
+.book-card .author {
         font-size: 0.9em;
         color: #555;
-    }
-    .authors-list {
+}
+.authors-list {
     white-space: nowrap; 
 }
 .info-list {
@@ -204,8 +226,9 @@
     gap: 5px;
     margin-left: auto; 
 }
+ 
 .bookmark-icon {
-    font-size: 28px;
+    font-size: 39px;
     color: #777;
     cursor: pointer;
     padding: 5px;
@@ -239,11 +262,15 @@
     background-color: #116466;  
     color: #d4f1f4;  
 }
+#add-to-cart-btn {
+    font-size: 1.1rem;
+    padding: 10px 20px;
+    font-weight: 600;
+}
 
 </style>
 
-
-
+ 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
@@ -440,7 +467,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 </script>
-
 
 
 <script>

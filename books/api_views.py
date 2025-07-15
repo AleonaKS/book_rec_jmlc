@@ -9,12 +9,15 @@ from django.db import transaction
 from django.db.models import F 
 from django.shortcuts import get_object_or_404 
 from django.utils import timezone  
-from books.models import Book, BookRating, BookView, UserBookStatus, UserSearchQuery # Author, Genre, Tag,
+from books.models import Book, BookRating, BookView, UserBookStatus, UserSubscription, UserSearchQuery, Author, Cycle # Genre, Tag,
 from books.models import UserPreferences, FavoriteAuthors, FavoriteGenres, FavoriteTags, DislikedGenres, DislikedTags
 from .recommendations.collaborative import get_recommendations_for_user_user_based   
 from .serializers import BookSerializer, UserSearchQuerySerializer
 from .forms import UserPreferencesForm 
+
  
+from django.http import JsonResponse
+
 from django.core.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
@@ -287,4 +290,65 @@ def get_user_search_history(request):
     serializer = UserSearchQuerySerializer(user_queries[:10], many=True)
     return Response(serializer.data)
 
+
+
+
+
+
+
+
+#
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def subscribe_author(request, author_id):
+    author = get_object_or_404(Author, id=author_id)
+    subscription, created = UserSubscription.objects.get_or_create(
+        user=request.user,
+        content_type='AUTHOR',
+        author=author,
+        defaults={'cycle': None}
+    )
+    if created:
+        return JsonResponse({'status': 'subscribed'})
+    else:
+        return JsonResponse({'status': 'already_subscribed'})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def unsubscribe_author(request, author_id):
+    author = get_object_or_404(Author, id=author_id)
+    deleted, _ = UserSubscription.objects.filter(
+        user=request.user,
+        content_type='AUTHOR',
+        author=author
+    ).delete()
+    return JsonResponse({'status': 'unsubscribed' if deleted else 'not_subscribed'})
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def subscribe_cycle(request, cycle_id):
+    cycle = get_object_or_404(Cycle, id=cycle_id)
+    subscription, created = UserSubscription.objects.get_or_create(
+        user=request.user,
+        content_type='CYCLE',
+        cycle=cycle,
+        defaults={'author': None}
+    )
+    if created:
+        return JsonResponse({'status': 'subscribed'})
+    else:
+        return JsonResponse({'status': 'already_subscribed'})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def unsubscribe_cycle(request, cycle_id):
+    cycle = get_object_or_404(Cycle, id=cycle_id)
+    deleted, _ = UserSubscription.objects.filter(
+        user=request.user,
+        content_type='CYCLE',
+        cycle=cycle
+    ).delete()
+    return JsonResponse({'status': 'unsubscribed' if deleted else 'not_subscribed'})
 

@@ -17,7 +17,8 @@
   {% url 'books_by_category' 'soon' as soon_url %}
 {% include 'sample/book_list.html' with books=soon_books section_title="Скоро" section_url=soon_url %}
 
-   {% url 'books_by_category' 'last' as last_url %}
-{% include 'sample/book_list.html' with books=last_books section_title="Последние просмотренные книги" section_url=last_url %}
-    
+    {% if last_books %}
+  {% include 'sample/book_list.html' with books=last_books section_title="Последние просмотренные книги"  %}     
+    {% endif %}
+ 
 {% endblock %}

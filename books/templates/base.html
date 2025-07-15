@@ -11,10 +11,12 @@
 </head>
 <body>
     <div class="top-bar">
-        <a href="{% url 'home' %}" class="icons" aria-label="Домой"><span class="fas fa-home"></span>  
-        </a>
-        <a href="{% url 'catalog' %}" class="catalog"><span class="fa-solid fa-bars"></span>Каталог</a>
- 
+    <a href="{% url 'home' %}" class="icons {% if request.resolver_match.url_name == 'home' %}active{% endif %}" aria-label="Домой">
+        <span class="fas fa-home"></span>  
+    </a>
+    <a href="{% url 'catalog' %}" class="catalog {% if request.resolver_match.url_name == 'catalog' %}active{% endif %}">
+        <span class="fa-solid fa-bars"></span>Каталог
+    </a>
         <div class="search-bar" style="position: relative;">
             <form method="get" action="{% url 'search_books' %}" autocomplete="off">
                 <input 
@@ -31,15 +33,22 @@
             <div id="autocomplete-results" class="autocomplete-box"></div>
         </div>
 
-        <a href="{% url 'cart' %}" class="icons" aria-label="Корзина">
-        <span class="fa-solid fa-cart-shopping"></span></a>
-        <a href="{% url 'bookmarks' %}" class="icons" aria-label="Закладки">
-        <span class="fa-regular fa-bookmark"></span></a>
-        {% if user.is_authenticated %}
-        <a href="{% url 'profile' %}" class="icons" aria-label="Выйти"><span class="fa-regular fa-user"></span></a>
-        {% else %}
-        <a href="#" class="icons" aria-label="Логин" id="loginBtn"><span class="fa-regular fa-user"></span></a>
-        {% endif %}
+    <a href="{% url 'cart' %}" class="icons {% if request.resolver_match.url_name == 'cart' %}active{% endif %}" aria-label="Корзина">
+        <span class="fa-solid fa-cart-shopping"></span>
+    </a>
+    <a href="{% url 'bookmarks' %}" class="icons {% if request.resolver_match.url_name == 'bookmarks' %}active{% endif %}" aria-label="Закладки">
+        <span class="fa-regular fa-bookmark"></span>
+    </a>
+    {% if user.is_authenticated %}
+    <a href="{% url 'profile' %}" class="icons {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" aria-label="Выйти">
+        <span class="fa-regular fa-user"></span>
+    </a>
+    {% else %}
+    <a href="#" class="icons" aria-label="Логин" id="loginBtn">
+        <span class="fa-regular fa-user"></span>
+    </a>
+    {% endif %}
+
     </div>
 
 <!-- Модальное окно авторизации -->
@@ -94,9 +103,15 @@
 
 <div class="content">
     {% block content %}
-    {% endblock %}
+    {% endblock %} 
+    {% block scripts %}{% endblock %}
 </div>
 
-
+<style>
+.icons.active, .catalog.active {
+    color: #053c3c;  
+    font-weight: bold;  
+}
+</style>
 </body>
 </html>

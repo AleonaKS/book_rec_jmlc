@@ -1,6 +1,6 @@
 import django_filters
 from django import forms
-from .models import Book, Tag, Genre, Publisher
+from .models import Book, Tag, Genre, Publisher, Author, Cycle
 
 class BookFilter(django_filters.FilterSet):
     genre = django_filters.ModelChoiceFilter(
@@ -39,5 +39,4 @@ class BookFilter(django_filters.FilterSet):
     class Meta:
         model = Book
         fields = ['genre', 'author', 'cycle', 'series', 'publisher', 'tags', 'new', 'soon', 'age_restriction', 'cover_type']
- 
  

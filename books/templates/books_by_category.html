@@ -1,5 +1,164 @@
-{% extends 'base.html' %}
+{% extends 'base.html' %} 
+
 {% block title %}{{ category_name }}{% endblock %}
-{% block content %}
+{% block content %} 
+
 {% include 'sample/book_grid.html' with books=books %}
+
+{% if cycle_obj or author_obj %}
+{% if request.user.is_authenticated %} 
+  {% if cycle_obj and cycle_obj.id in user_cycle_subscriptions %}
+    <button class="unsubscribe-btn" data-cycle-id="{{ cycle_obj.id }}">Отписаться от цикла</button>
+  {% else %}
+    <button class="subscribe-btn" data-cycle-id="{{ cycle_obj.id }}">Подписаться на цикл</button>
+  {% endif %}
+
+  {% if author_obj and author_obj.id in user_author_subscriptions %}
+    <button class="unsubscribe-btn" data-author-id="{{ author_obj.id }}">Отписаться от автора</button>
+  {% else %}
+    <button class="subscribe-btn" data-author-id="{{ author_obj.id }}">Подписаться на автора</button>
+  {% endif %}
+{% else %}
+  <p><a href="{% url 'login' %}?next={{ request.path }}">Войдите, чтобы подписываться</a></p>
+{% endif %}
+{% endif %}
+
+
+<script>
+    document.addEventListener('click', function(e) {
+  if (e.target.matches('.subscribe-btn')) {
+    const authorId = e.target.dataset.authorId;
+    fetch(`/subscribe/author/${authorId}/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+        'Accept': 'application/json'
+      },
+      credentials: 'same-origin'
+    }).then(res => res.json())
+      .then(data => {
+        if (data.status === 'subscribed') {
+          e.target.textContent = 'Отписаться';
+          e.target.classList.remove('subscribe-btn');
+          e.target.classList.add('unsubscribe-btn');
+        }
+      });
+  }
+  else if (e.target.matches('.unsubscribe-btn')) {
+    const authorId = e.target.dataset.authorId;
+    fetch(`/unsubscribe/author/${authorId}/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+        'Accept': 'application/json'
+      },
+      credentials: 'same-origin'
+    }).then(res => res.json())
+      .then(data => {
+        if (data.status === 'unsubscribed') {
+          e.target.textContent = 'Подписаться';
+          e.target.classList.remove('unsubscribe-btn');
+          e.target.classList.add('subscribe-btn');
+        }
+      });
+  }
+});
+
+
+document.addEventListener('click', function(e) {
+  if (e.target.matches('.subscribe-btn')) {
+    if (e.target.dataset.authorId) {
+      const authorId = e.target.dataset.authorId;
+      fetch(`/subscribe/author/${authorId}/`, { method: 'POST', /* ... */ })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'subscribed') {
+            e.target.textContent = 'Отписаться';
+            e.target.classList.remove('subscribe-btn');
+            e.target.classList.add('unsubscribe-btn');
+          }
+        });
+    } else if (e.target.dataset.cycleId) {
+      const cycleId = e.target.dataset.cycleId;
+      fetch(`/subscribe/cycle/${cycleId}/`, { method: 'POST', /* ... */ })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'subscribed') {
+            e.target.textContent = 'Отписаться';
+            e.target.classList.remove('subscribe-btn');
+            e.target.classList.add('unsubscribe-btn');
+          }
+        });
+    }
+  }
+  else if (e.target.matches('.unsubscribe-btn')) {
+    if (e.target.dataset.authorId) {
+      const authorId = e.target.dataset.authorId;
+      fetch(`/unsubscribe/author/${authorId}/`, { method: 'POST', /* ... */ })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'unsubscribed') {
+            e.target.textContent = 'Подписаться';
+            e.target.classList.remove('unsubscribe-btn');
+            e.target.classList.add('subscribe-btn');
+          }
+        });
+    } else if (e.target.dataset.cycleId) {
+      const cycleId = e.target.dataset.cycleId;
+      fetch(`/unsubscribe/cycle/${cycleId}/`, { method: 'POST', /* ... */ })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'unsubscribed') {
+            e.target.textContent = 'Подписаться';
+            e.target.classList.remove('unsubscribe-btn');
+            e.target.classList.add('subscribe-btn');
+          }
+        });
+    }
+  }
+});
+
+// Функция для получения csrftoken из cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+
+<style>
+.category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 15px;
+  margin-bottom: 20px;
+}
+.btn-subscribe {
+  background-color: #3AAFA9;
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.btn-subscribe.active {
+  background-color: #116466;
+}
+.btn-subscribe:hover {
+  background-color: #116466;
+}
+</style>
+
 {% endblock %} 

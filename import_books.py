@@ -45,6 +45,12 @@ def import_books(file_path):
                 isbn = None
             if not isbn:
                 continue
+
+            # Проверяем, есть ли книга с таким ISBN в базе — если есть, пропускаем
+            if Book.objects.filter(isbn=isbn).exists():
+                logger.info(f'Книга с ISBN {isbn} уже есть в базе, пропускаем')
+                continue
+
             if isbn in imported_isbns:
                 continue
             imported_isbns.add(isbn)

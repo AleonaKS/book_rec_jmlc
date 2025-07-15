@@ -6,9 +6,9 @@ class Command(BaseCommand):
     help = 'Запускает scrapy и reviews.py'
 
     def handle(self, *args, **options):
-        # Абсолютный путь к файлу команды parsing.py
+        # абсолютный путь к файлу команды parsing.py
         current_file = os.path.abspath(__file__)
-        # Поднимаемся на 4 уровня вверх, чтобы попасть в корень books_site/
+        # поднимаемся на 4 уровня вверх, чтобы попасть в корень books_site/
         base_dir = os.path.dirname(
             os.path.dirname(
                 os.path.dirname(
@@ -21,7 +21,7 @@ class Command(BaseCommand):
 
         self.stdout.write(f'Рабочая директория для запуска: {spiders_dir}')
 
-        # Запуск scrapy crawl books
+        # запуск scrapy crawl books
         result = subprocess.run(
             ['scrapy', 'crawl', 'books'],
             cwd=spiders_dir,
@@ -34,7 +34,7 @@ class Command(BaseCommand):
         else:
             self.stderr.write(self.style.ERROR(f'Ошибка scrapy: {result.stderr}'))
 
-        # Запуск reviews.py
+        # запуск reviews.py
         result = subprocess.run(
             ['python3', 'reviews.py'],
             cwd=spiders_dir,
@@ -46,7 +46,6 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS('reviews.py успешно завершился'))
         else:
             self.stderr.write(self.style.ERROR(f'Ошибка reviews.py: {result.stderr}'))
-
 
 
 

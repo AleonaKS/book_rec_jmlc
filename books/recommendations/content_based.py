@@ -84,7 +84,7 @@ def cosine_sim_sparse(indices1, values1, indices2, values2):
     return float(np.dot(v1, v2) / (norm1 * norm2))
 
 
-# noML (вынести в отдельный файл)
+
 def get_similar_books_combined(book: Book, top_n=10,
                                weight_genre=3, weight_author=2, weight_tag=1, weight_tfidf=5):
     genre = book.genre

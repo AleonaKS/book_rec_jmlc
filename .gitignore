@@ -60,5 +60,5 @@ scraper/parsing_books/scraper.log
 *.json
 *.jsonl
 
-books/recommendations/nltk_lda.py 
+books_site/books/management/commands/nltk_lda.py
 books_site/books/recommendations/utils.py

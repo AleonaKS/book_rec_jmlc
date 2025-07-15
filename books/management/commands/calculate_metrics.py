@@ -7,5 +7,5 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         TOP_N_list = [10, 20, 30, 40]
-        calculate_metrics_for_users_extended(TOP_N_list=TOP_N_list, csv_path='metrics_results_2.csv')
+        calculate_metrics_for_users_extended(TOP_N_list=TOP_N_list, csv_path='metrics_results_3.csv')
       

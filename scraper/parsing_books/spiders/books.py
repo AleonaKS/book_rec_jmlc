@@ -24,8 +24,8 @@ class NewBooksSpiderSpider(scrapy.Spider):
         super().__init__(*args, **kwargs)
         self.collected_books = {}
         self.duplicate_count = 0
-        self.max_pages = 2
-        self.current_page = 1 
+        self.max_pages = 21
+        self.current_page = 11
 
     def start_requests(self):
         time.sleep(5)

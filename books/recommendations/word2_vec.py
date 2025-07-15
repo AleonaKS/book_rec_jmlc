@@ -33,12 +33,12 @@ def get_similar_books_by_w2v(target_book_id, top_n=10):
     except BookVector.DoesNotExist:
         return []
 
-    target_vector = target_vector_obj.vector
+    target_vector = target_vector_obj.w2v_vector   
     if not target_vector:
         return []
 
-    vectors_qs = BookVector.objects.exclude(book_id=target_book_id).exclude(vector__isnull=True)
-    book_vectors = [(bv.book_id, bv.vector) for bv in vectors_qs if bv.vector]
+    vectors_qs = BookVector.objects.exclude(book_id=target_book_id).exclude(w2v_vector__isnull=True)
+    book_vectors = [(bv.book_id, bv.w2v_vector) for bv in vectors_qs if bv.w2v_vector]
 
     target_vec_np = np.array(target_vector)
     target_norm = np.linalg.norm(target_vec_np)
@@ -69,6 +69,7 @@ def get_similar_books_by_w2v(target_book_id, top_n=10):
     return result
 
 
+
 def get_read_books_for_user(user_id):
     # Книги, которые пользователь купил
     bought_books = set(
@@ -86,25 +87,24 @@ def get_read_books_for_user(user_id):
     user_books = bought_books.union(rated_books)
     return user_books
 
+
 def get_word2vec_recommendations_for_user(user, top_n=10):
     read_books = get_read_books_for_user(user.id)
     if not read_books:
         return []
 
     similar_books_scores = defaultdict(float)
-    for book in read_books:
-        sims = get_similar_books_by_w2v(book.id, top_n=top_n*2)  # берем больше, чтобы потом отфильтровать
+    for book_id in read_books:
+        sims = get_similar_books_by_w2v(book_id, top_n=top_n*2)
         for rec in sims:
             rec_book = rec['book']
             sim_score = rec['similarity']
             if rec_book.id not in read_books:
                 similar_books_scores[rec_book.id] = max(similar_books_scores[rec_book.id], sim_score)
 
-    # Сортируем по убыванию сходства
     sorted_books = sorted(similar_books_scores.items(), key=lambda x: x[1], reverse=True)[:top_n]
     book_ids = [bid for bid, _ in sorted_books]
     books = Book.objects.filter(id__in=book_ids)
-    # Сохраняем порядок
     books_dict = {book.id: book for book in books}
     ordered_books = [books_dict[bid] for bid in book_ids if bid in books_dict]
     return ordered_books
@@ -116,23 +116,18 @@ def tokenize(text):  # Простая токенизация: по словам,
     tokens = re.findall(r'\b\w+\b', text)
     return tokens
 
-def prepare_corpus():
-    """
-    Собираем тексты для обучения word2vec: описание + отзывы каждой книги.
-    Возвращает список списков токенов (корпус для обучения).
-    """
-    corpus = []
-    books = Book.objects.prefetch_related('review_set').all()
 
+def prepare_corpus():
+    corpus = []
+    books = Book.objects.prefetch_related('review_set').all()   
+    # Собираем описание + все отзывы в один текст
     for book in books:
-        # Собираем описание + все отзывы в один текст
         texts = [book.description or '']
         reviews = book.review_set.all()
         texts.extend([r.text or '' for r in reviews])
         full_text = ' '.join(texts)
         tokens = tokenize(full_text)
         if tokens:
-            corpus.append(tokens)
+            corpus.append(tokens) #  список списков токенов (корпус для обучения)
     return corpus, books
-
  

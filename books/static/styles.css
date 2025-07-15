@@ -146,16 +146,17 @@ h3 {
 
 /* <!-- Стили для модального окна --> */
 .modal {
-    display: none; /* Скрываем модальное окно по умолчанию */
-    position: fixed; /* Открываем модальное окно поверх страницы */
-    z-index: 1; /* Устанавливаем уровень отображения */
-    left: 0;
-    top: 0;
+    display: none; 
+    position: fixed; 
+    z-index: 1;  
+    left: 0; top: 0;
     width: 100%;  
     height: 100%;  
     overflow: auto;   
-    background-color: rgba(0,0,0,0.4);  
-}
+    background-color: rgba(0,0,0,0.3);  
+    justify-content: center;
+    align-items: center;
+}  
 .modal-content {  
     background-color: #fefefe;
     margin: 15% auto; 
@@ -429,16 +430,7 @@ input[type="password"]:focus {
 
 
 /* Модальное окно */
-.modal {
-    display: none; /* Скрыто по умолчанию */
-    position: fixed;
-    z-index: 1000;
-    left: 0; top: 0;
-    width: 100%; height: 100%;
-    background-color: rgba(0,0,0,0.5); 
-    justify-content: center;
-    align-items: center;
-}
+
 
 .modal-content {
     background: white;

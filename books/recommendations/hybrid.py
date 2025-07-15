@@ -20,8 +20,7 @@ def hybrid_recommendations_for_user(user, top_n=20,
     def add_scores(recs, weight):
         for book_id, score in recs:
             scores[book_id] = scores.get(book_id, 0) + weight * score
-
-    # Обертки, приводящие к (book_id, score)
+ 
     def wrap_user_based(user):
         books = get_recommendations_for_user_user_based(user.id, top_n=50)
         return [(b.id, 1.0) for b in books]

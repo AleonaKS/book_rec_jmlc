@@ -159,7 +159,7 @@ class UserPreferencesForm(forms.ModelForm):
                 
                 try:
                     score = float(score)
-                    score = max(0, min(10, score))   
+                    score = max(0, min(5, score))
                 except (ValueError, TypeError):
                     score = 0
                 
