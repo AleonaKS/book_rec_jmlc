@@ -30,8 +30,7 @@ def home_view(request):
     if request.user.is_authenticated:
         user = request.user
         user_views = BookView.objects.filter(user=user).order_by('-viewed_at')
-
-        # Получаем все гибридные рекомендации (например, 50 штук)
+ 
         recommended_books_all = hybrid_recommendations_for_user(user, top_n=50)
 
         try:
@@ -77,8 +76,7 @@ def home_view(request):
         popular_candidates = [b for b in popular_cold if not b.new and not b.soon and b.id not in used_ids]
         popular_books = popular_candidates[:30]
         used_ids.update(b.id for b in popular_books)
-
-        # Если мало, дополняем рандомными книгами без new и soon
+ 
         if len(popular_books) < 30:
             needed = 30 - len(popular_books)
             extra_popular = Book.objects.filter(new=False, soon=False).exclude(id__in=used_ids).order_by('?')[:needed]
@@ -89,25 +87,13 @@ def home_view(request):
         recommended_books = recommended_candidates[:30]
         used_ids.update(b.id for b in recommended_books)
 
-        # # Если мало, дополняем рандомными книгами без new и soon
-        # if len(recommended_books) < 30:
-        #     needed = 30 - len(recommended_books)
-        #     extra_rec = Book.objects.filter(new=False, soon=False).exclude(id__in=used_ids).order_by('?')[:needed]
-        #     recommended_books.extend(extra_rec)
-        #     used_ids.update(b.id for b in extra_rec)
-
     else:
         # Анонимный пользователь
         session_key = request.session.session_key
         if not session_key:
             request.session.create()
             session_key = request.session.session_key
-
-        # popular_books, new_books, soon_books = recommendations_for_anonymous(session_key)
-        # # recommended_books для анонима — популярные без new и soon, чтобы не пересекались
-        # recommended_books = [b for b in popular_books if not b.new and not b.soon][:30]
-        # recommended_ids = {b.id for b in recommended_books}
-        # popular_books = [b for b in popular_books if b.id not in recommended_ids]
+ 
         popular_books, new_books, soon_books, recommended_books = recommendations_for_anonymous(session_key)
         user_views = BookView.objects.filter(user__isnull=True, session_key=session_key).order_by('-viewed_at')
 
@@ -157,8 +143,7 @@ def search_books(request):
     sort = request.GET.get('sort_by', '')
 
     qs = Book.objects.all()
-
-    # Фильтрация по параметрам
+ 
     if genre:
         qs = qs.filter(genre__name__iexact=genre)
     if author:
@@ -171,8 +156,7 @@ def search_books(request):
         qs = qs.filter(series__name__iexact=series)
     if tag:
         qs = qs.filter(tags__name__iexact=tag)
-
-    # Поиск по тексту, если есть
+ 
     if query:
         alt_query = switch_keyboard_layout(query) if query else ''
         sqs_title_main = SearchQuerySet().autocomplete(content_auto=query)
@@ -184,8 +168,7 @@ def search_books(request):
         books = [res.object for res in sqs if res.object is not None][:100]
         book_ids = [book.id for book in books]
         qs = qs.filter(id__in=book_ids)
-
-    # Сортировка
+ 
     if sort == 'popularity':
         qs = qs.order_by('-popularity_score')
     elif sort == 'newness':
@@ -205,49 +188,6 @@ def search_books(request):
         'sort': sort,
     }
     return render(request, 'search.html', context)
-
-
-
-# def home_view(request):
-#     popular_books, new_books, soon_books = None, None, None
-#     if request.user.is_authenticated:
-#         user_views = BookView.objects.filter(user=request.user).order_by('-viewed_at')
-#         user = request.user
-#         recommended_books = hybrid_recommendations_for_user(user, top_n=30)
-#         try:
-#             prefs = user.userpreferences
-#             favorite_genres = prefs.favorite_genres.all().values_list('id', flat=True)
-#             favorite_tags = prefs.favorite_tags.all().values_list('id', flat=True)
-#             # recommended_books = hybrid_recommendations_for_user(user, top_n=30)
-#             popular_books, new_books, soon_books = recommendations_split(user, list(favorite_genres), list(favorite_tags), top_n=30)
-#         except UserPreferences.DoesNotExist:
-#             popular_books, new_books, soon_books = recommendations_for_user_without_preferences(user, top_n=30)
-#     else:
-#         session_key = request.session.session_key
-#         if not session_key:
-#             request.session.create()
-#             session_key = request.session.session_key
-#         user_views = BookView.objects.filter(user__isnull=True, session_key=session_key).order_by('-viewed_at')
-#         popular_books, new_books, soon_books = recommendations_for_anonymous(session_key)
-#         recommended_books = popular_books
-
-#     last_20_book_ids = list(user_views.values_list('book_id', flat=True).distinct()[:20])
-#     books = list(Book.objects.filter(id__in=last_20_book_ids))
-#     last_books = sorted(books, key=lambda b: last_20_book_ids.index(b.id))
-
-#     request.session['recommended_book_ids'] = [book.id for book in recommended_books] if recommended_books else []
-#     request.session['popular_book_ids'] = [book.id for book in popular_books] if popular_books else []
-#     request.session['new_book_ids'] = [book.id for book in new_books] if new_books else []
-#     request.session['soon_book_ids'] = [book.id for book in soon_books] if soon_books else []
-
-#     context = {
-#         'recommended_books': recommended_books,
-#         'popular_books': popular_books,
-#         'new_books': new_books,
-#         'soon_books': soon_books,
-#         'last_books': last_books
-#     }
-#     return render(request, 'home.html', context)
 
 
 
@@ -292,8 +232,7 @@ def catalog(request):
         qs = qs.order_by('-rating_chitai_gorod')
     else:
         qs = qs.order_by('-votes_chitai_gorod', '-rating_chitai_gorod')
-
-    # Аннотации для пользователя
+ 
     if request.user.is_authenticated:
         user_book_status_qs = UserBookStatus.objects.filter(user=request.user, book=OuterRef('pk'))
         qs = qs.annotate(
@@ -395,8 +334,7 @@ def books_by_category(request, category_slug=None):
                     in_bookmarks=Value(False, output_field=BooleanField()),
                 )
 
-            books = list(books_qs)
-            # Сортируем книги по порядку из book_ids
+            books = list(books_qs) 
             books.sort(key=lambda b: book_ids.index(b.id))
 
         category_name = CATEGORY_NAMES.get(category_slug, 'Книги')
@@ -456,16 +394,13 @@ def books_by_category(request, category_slug=None):
 @login_required
 def profile(request):
     user = request.user
-
-    # Получаем подписки пользователя
+    
     subscriptions = UserSubscription.objects.filter(user=user).select_related('author', 'cycle')
     author_subscriptions = [s.author for s in subscriptions if s.content_type == 'AUTHOR' and s.author]
     cycle_subscriptions = [s.cycle for s in subscriptions if s.content_type == 'CYCLE' and s.cycle]
-
-    # Получаем или создаём настройки пользователя (UserPreferences)
+ 
     preferences, _ = UserPreferences.objects.get_or_create(user=user)
-
-    # Получаем оценки пользователя для книг (пример)
+ 
     user_ratings_subquery = BookRating.objects.filter(
         user=user,
         book=OuterRef('pk')
@@ -483,8 +418,7 @@ def profile(request):
             return redirect('profile')
     else:
         form = UserPreferencesForm(instance=preferences, user=user)
-
-    # Получаем объекты с фильтрацией по userprofile=preferences
+ 
     favorite_authors = FavoriteAuthors.objects.filter(userprofile=preferences).select_related('author') 
     favorite_genres = FavoriteGenres.objects.filter(userprofile=preferences).select_related('genre')
     disliked_genres = DislikedGenres.objects.filter(userprofile=preferences).select_related('genre')
