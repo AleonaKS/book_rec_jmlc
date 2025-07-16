@@ -33,21 +33,16 @@
             <div id="autocomplete-results" class="autocomplete-box"></div>
         </div>
 
-    <a href="{% url 'cart' %}" class="icons {% if request.resolver_match.url_name == 'cart' %}active{% endif %}" aria-label="Корзина">
-        <span class="fa-solid fa-cart-shopping"></span>
-    </a>
-    <a href="{% url 'bookmarks' %}" class="icons {% if request.resolver_match.url_name == 'bookmarks' %}active{% endif %}" aria-label="Закладки">
-        <span class="fa-regular fa-bookmark"></span>
-    </a>
-    {% if user.is_authenticated %}
-    <a href="{% url 'profile' %}" class="icons {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" aria-label="Выйти">
-        <span class="fa-regular fa-user"></span>
-    </a>
-    {% else %}
-    <a href="#" class="icons" aria-label="Логин" id="loginBtn">
-        <span class="fa-regular fa-user"></span>
-    </a>
-    {% endif %}
+<a href="{% url 'cart' %}" class="icons cart-icon" aria-label="Корзина">
+    <span class="fa-solid fa-cart-shopping"></span>
+</a>
+<a href="{% url 'bookmarks' %}" class="icons bookmarks-icon" aria-label="Закладки">
+    <span class="fa-regular fa-bookmark"></span>
+</a>
+<a href="{% url 'profile' %}" class="icons profile-icon" aria-label="Профиль">
+    <span class="fa-regular fa-user"></span>
+</a>
+
 
     </div>
 
@@ -97,7 +92,11 @@
 </div>
 </div>
 
-<script> const loginUrl = "{% url 'login' %}"; </script>
+<script> 
+const loginUrl = "{% url 'login' %}";  
+const isAuthenticated = JSON.parse('{{ user.is_authenticated|yesno:"true,false" }}');
+</script>
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="{% static 'main.js' %}"></script>
 

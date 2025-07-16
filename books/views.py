@@ -26,13 +26,10 @@ logger = logging.getLogger(__name__)
 def home_view(request):
     popular_books, new_books, soon_books = None, None, None
     recommended_books = []
-
     if request.user.is_authenticated:
         user = request.user
         user_views = BookView.objects.filter(user=user).order_by('-viewed_at')
- 
         recommended_books_all = hybrid_recommendations_for_user(user, top_n=50)
-
         try:
             prefs = user.userpreferences
             favorite_genres = prefs.favorite_genres.all().values_list('id', flat=True)
@@ -42,10 +39,8 @@ def home_view(request):
             popular_cold, new_cold, soon_cold = recommendations_for_user_without_preferences(user, top_n=50)
 
         used_ids = set()
- 
         new_books = [b for b in recommended_books_all if b.new]
         used_ids.update(b.id for b in new_books)
- 
         new_candidates = [b for b in new_cold if b.id not in used_ids]
         new_books.extend(new_candidates)
         used_ids.update(b.id for b in new_candidates)
@@ -57,10 +52,8 @@ def home_view(request):
             used_ids.update(b.id for b in extra_new)
 
         new_books = new_books[:30]
- 
         soon_books = [b for b in recommended_books_all if b.soon and b.id not in used_ids]
         used_ids.update(b.id for b in soon_books)
- 
         soon_candidates = [b for b in soon_cold if b.id not in used_ids]
         soon_books.extend(soon_candidates)
         used_ids.update(b.id for b in soon_candidates)
@@ -72,7 +65,6 @@ def home_view(request):
             used_ids.update(b.id for b in extra_soon)
 
         soon_books = soon_books[:30]
- 
         popular_candidates = [b for b in popular_cold if not b.new and not b.soon and b.id not in used_ids]
         popular_books = popular_candidates[:30]
         used_ids.update(b.id for b in popular_books)
@@ -116,8 +108,6 @@ def home_view(request):
         'last_books': last_books
     }
     return render(request, 'home.html', context)
-
-
 
 
 

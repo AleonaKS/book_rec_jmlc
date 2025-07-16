@@ -204,4 +204,14 @@ alert(errorMsg);
 
         this.submit();
     });
+
+ // Обработчик клика по иконкам корзина, закладки, профиль
+function handleIconClick(event) {
+    if (!isAuthenticated) {
+        event.preventDefault(); // Отменяем переход
+        $('#loginModal').show(); // Показываем модальное окно входа
+    }
+}
+$('.cart-icon, .bookmarks-icon, .profile-icon').on('click', handleIconClick);
 });
+

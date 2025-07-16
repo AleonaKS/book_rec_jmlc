@@ -31,9 +31,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.home_view, name='home'),  
     path('registration/', views.registration, name='registration'),  
-    path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
+    path('login/', auth_views.LoginView.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
-    
     path('autocomplete/', autocomplete_books, name='autocomplete_books'),
     path('profile/', views.profile, name='profile'), 
     path('api/record-book-view/', record_book_view, name='record-book-view'),

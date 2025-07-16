@@ -62,3 +62,4 @@ scraper/parsing_books/scraper.log
 
 books_site/books/management/commands/nltk_lda.py
 books_site/books/recommendations/utils.py
+books_site/scraper/parsing_books/spiders/take_books.py

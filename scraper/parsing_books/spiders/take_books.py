@@ -20,8 +20,7 @@ class BookInfoFromISBNSpider(scrapy.Spider):
         }
     }
 
-    def start_requests(self):
-        # Загружаем JSON с isbn из файла
+    def start_requests(self): 
         json_path = os.path.join(os.path.dirname(__file__), 'reviews_results_old_old.json')
         with open(json_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
@@ -34,7 +33,7 @@ class BookInfoFromISBNSpider(scrapy.Spider):
             yield scrapy.Request(search_url, callback=self.parse_search, meta={'isbn': isbn})
 
     def parse_search(self, response):
-        isbn = response.meta['isbn'] # Ищем первую книгу в результатах поиска
+        isbn = response.meta['isbn']  
         books = response.css('article.product-card')
         if not books:
             self.logger.warning(f"Книга с ISBN {isbn} не найдена на chitai-gorod.ru")
@@ -67,9 +66,7 @@ class BookInfoFromISBNSpider(scrapy.Spider):
                 'isbn': isbn,
                 'error': 'Book link not found in search results'
             }
-        
-        # yield response.follow(first_book_link, callback=self.parse_book_info, meta={'isbn': isbn})
-
+         
     def parse_book_info(self, response):
         isbn = response.meta['isbn']
         rating = response.meta.get('rating')
@@ -175,10 +172,6 @@ class BookInfoFromISBNSpider(scrapy.Spider):
             'rating_count_chitai_gorod': rating_count or self.reviews_data.get(isbn, {}).get('votes'),
             'price': get_price(response),
             'image_link': response.css('div.product-detail-page__media img.product-preview__placeholder::attr(src)').get(),
-            # Можно добавить сюда отзывы и рейтинги из вашего файла reviews_results_old_old.json
-            # 'rating': self.reviews_data.get(isbn, {}).get('rating'),
-            # 'votes': self.reviews_data.get(isbn, {}).get('votes'),
-            # 'reviews': self.reviews_data.get(isbn, {}).get('reviews'),
         }
 
         yield book_info
