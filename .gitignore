@@ -56,7 +56,7 @@ scraper/parsing_books/scraper.log
 *.pth
 *.kv
 
-.csv 
+*.csv 
 *.json
 *.jsonl
 
