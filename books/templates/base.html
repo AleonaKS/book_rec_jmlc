@@ -77,9 +77,13 @@
                 <div class="input-container">
                     <input type="login" name="username" id="reg_username" placeholder="Логин" required>
                 </div>
-                <div class="input-container">
+                <div class="form-group"> 
                     <input type="password" name="password1" id="reg_password" placeholder="Пароль" required>
+                    <small class="form-text text-muted password-hint">Пароль должен содержать минимум 6 символов</small>
                 </div>
+                <!-- <div class="input-container">
+                    <input type="password" name="password1" id="reg_password" placeholder="Пароль" required>
+                </div> -->
                 <div class="input-container">
                     <input type="password" name="password2" id="confirm_password" placeholder="Подтвердите пароль" required>
                 </div>
@@ -110,6 +114,10 @@ const isAuthenticated = JSON.parse('{{ user.is_authenticated|yesno:"true,false" 
 .icons.active, .catalog.active {
     color: #053c3c;  
     font-weight: bold;  
+}
+.password-hint {
+  font-size: 0.6rem;
+  color: rgba(120, 120, 120, 0.5); 
 }
 </style>
 </body>
