@@ -1,5 +1,5 @@
 Демонстрация проекта (через ngrok, временный публичный доступ):
-[https://39c0f3fd26cb.ngrok-free.app](https://20f6c32f4132.ngrok-free.app)
+[https://20f6c32f4132.ngrok-free.app](https://f2bad32845d5.ngrok-free.app)
 
 # Инструкция по запуску проекта `books_site`
 
